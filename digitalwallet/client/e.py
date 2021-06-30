@@ -1,40 +1,6 @@
-from celery import shared_task
-from django.conf import settings
-import os
-import time
-from client.models import RegisterUser, User
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
-@shared_task
-def send_mail_task(userid):
-    print("*****"*10)
-    print("QUEUE Started")
-    print("Time sleep started")
-    time.sleep(15)
-    print("Time sleep Ended")
-    print("QUEUE Ended")
-    otp=otpgen()
-    u = User.objects.get(id=userid)
-    sendEmailForVerification(otp,u.email)
-    if RegisterUser.objects.filter(user=u):
-        RegisterUser.objects.filter(user=u).update(otp=otp)
-    else:
-        user = RegisterUser(user=u,otp=otp)
-        user.save()
-
-
-
-
-import random as r
-# function for otp generation
-def otpgen():
-    otp=""
-    for i in range(4):
-        otp+=str(r.randint(1,9))
-    print ("Your One Time Password is ")
-    print (otp)
-    return otp
 
 def sendEmailForVerification(otp,receiver_email):
     
@@ -80,3 +46,7 @@ def sendEmailForVerification(otp,receiver_email):
             print(e)
             # data = {'error':'1'}
             # return data
+
+
+
+sendEmailForVerification(2334,'mansichauhan15@gmail.com')

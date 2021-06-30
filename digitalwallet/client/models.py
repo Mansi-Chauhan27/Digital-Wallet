@@ -1,5 +1,10 @@
+# from digitalwallet.digitalwallet.settings import AUTH_USER_MODEL
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from rest_framework.authtoken.models import Token
+from django.dispatch import receiver
+from django.conf import settings
+from django.db.models.signals import post_save
 
 # Create your models here.
 
@@ -56,6 +61,16 @@ class User(AbstractUser):
     REQUIRED_FIELDS = [] # Email & Password are required by default.
 
     objects = UserManager()
+
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def create_auth_token(sender, instance=None, created=False, **kwargs):
+    if created:
+        Token.objects.create(user=instance)
+
+    
+
+    
+
 
 class RegisterUser(models.Model):
     

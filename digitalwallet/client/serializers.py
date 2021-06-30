@@ -1,9 +1,10 @@
 from rest_framework import serializers
-# from django.contrib.auth.models import User
+# from django.contrib.auth.models import Token
 from .models import User
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
 from client.tasks import send_mail_task
+from rest_framework.authtoken.models import Token
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -15,12 +16,16 @@ class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
     password2 = serializers.CharField(write_only=True, required=True)
 
+    # token = serializers.SerializerMethodField('get_auth_token')
     class Meta:
         model = User
-        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name')
+        fields = ('username', 'password', 'password2', 'email', 'first_name', 'last_name', 'is_admin', 'is_customer')
         extra_kwargs = {
             'first_name': {'required': True},
-            'last_name': {'required': True}
+            'last_name': {'required': True},
+            'is_admin': {'required': True},
+            'is_customer': {'required': True},
+
         }
 
     def validate(self, attrs):
@@ -35,12 +40,25 @@ class RegisterSerializer(serializers.ModelSerializer):
             # username=validated_data['username'],
             email=validated_data['email'],
             first_name=validated_data['first_name'],
-            last_name=validated_data['last_name']
+            last_name=validated_data['last_name'],
+            is_admin=validated_data['is_admin'],
+            is_customer=validated_data['is_customer'],
+            
         )
         print('yyufyuf',user)
         send_mail_task.delay(user.id)
         print('rfrfer')
         user.set_password(validated_data['password'])
         user.save()
-
+        token=Token.objects.get(user=user).key
+        print('token',token)
+        # data={'token':}
+        print(user)
         return user
+
+    # def get_auth_token(self, obj):
+        
+    #     token = Token.objects.get(user=user).key
+    #     return token
+
+    

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -142,3 +143,7 @@ CORS_ORIGIN_WHITELIST = [
 ]
 
 CELERY_BROKER_URL = 'amqp://localhost'
+
+LOGIN_REDIRECT_URL = '/client/login'
+
+LOGIN_URL = '/client/login'
