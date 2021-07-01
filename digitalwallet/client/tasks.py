@@ -2,9 +2,10 @@ from celery import shared_task
 from django.conf import settings
 import os
 import time
-from client.models import RegisterUser, User
+from client.models import RegisterUserOtp, User
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
+from common.helper.utils import otpgen
 
 @shared_task
 def send_mail_task(userid):
@@ -17,28 +18,28 @@ def send_mail_task(userid):
     otp=otpgen()
     u = User.objects.get(id=userid)
     sendEmailForVerification(otp,u.email)
-    if RegisterUser.objects.filter(user=u):
-        RegisterUser.objects.filter(user=u).update(otp=otp)
+    if RegisterUserOtp.objects.filter(user=u):
+        RegisterUserOtp.objects.filter(user=u).update(otp=otp)
     else:
-        user = RegisterUser(user=u,otp=otp)
+        user = RegisterUserOtp(user=u,otp=otp)
         user.save()
 
 
 
 
-import random as r
-# function for otp generation
-def otpgen():
-    otp=""
-    for i in range(4):
-        otp+=str(r.randint(1,9))
-    print ("Your One Time Password is ")
-    print (otp)
-    return otp
+# import random as r
+# # function for otp generation
+# def otpgen():
+#     otp=""
+#     for i in range(4):
+#         otp+=str(r.randint(1,9))
+#     print ("Your One Time Password is ")
+#     print (otp)
+#     return otp
 
 def sendEmailForVerification(otp,receiver_email):
     
-    # SENDER_EMAIL = conf_settings.ADMIN_ID
+    # SENDER_EMAIL = settings.ADMIN_ID
     SENDER_EMAIL = 'mfsi.mansic@gmail.com'
     print('SENDER_EMAIL',SENDER_EMAIL)
     RECEIVER_EMAIL = ['mansichauhan15@gmail.com']
@@ -70,7 +71,7 @@ def sendEmailForVerification(otp,receiver_email):
             
                 message1 = Mail(from_email=SENDER_EMAIL,to_emails=str(item),subject=SUBJECT,html_content=HTML)
             
-                sg = SendGridAPIClient('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')
+                sg = SendGridAPIClient(settings.SENDGRID_KEY)
                 response = sg.send(message1)
                 print(response.status_code)
                 print(response.body)

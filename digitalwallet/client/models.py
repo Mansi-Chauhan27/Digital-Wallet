@@ -72,7 +72,7 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
     
 
 
-class RegisterUser(models.Model):
+class RegisterUserOtp(models.Model):
     
     # email = models.EmailField(
     #     verbose_name='email address',
@@ -87,6 +87,8 @@ class RegisterUser(models.Model):
     )
     otp = models.IntegerField()
     expiry = models.DateTimeField(auto_now_add=True)
+
+
 
     
 

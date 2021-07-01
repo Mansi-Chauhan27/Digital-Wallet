@@ -13,6 +13,10 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 
 import os
 
+import environ
+env = environ.Env()
+environ.Env.read_env()
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -21,7 +25,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'pqy7oe75tku9zm1kepkax+52v%v_!a0r_g(z$281-zht_lf*hd'
+SECRET_KEY =  env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -42,6 +46,8 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'client',
     'corsheaders',
+    'transaction',
+    'guardian',
 ]
 
 MIDDLEWARE = [
@@ -53,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'digitalwallet.urls'
@@ -147,3 +154,10 @@ CELERY_BROKER_URL = 'amqp://localhost'
 LOGIN_REDIRECT_URL = '/client/login'
 
 LOGIN_URL = '/client/login'
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend', # this is default
+    'guardian.backends.ObjectPermissionBackend',
+)
+
+# GUARDIAN_GET_INIT_ANONYMOUS_USER = 'core.models.get_custom_anon_user'
