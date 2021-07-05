@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.conf import settings
 from django.db.models.signals import post_save
 from client.models import User
+from devices.models import Device
 
 # Create your models here.
 
@@ -42,6 +43,8 @@ class TransactionDetails(models.Model):
     is_topup = models.BooleanField(default=False)
     card = models.ManyToManyField(CardDetails)
     gift_card = models.ForeignKey(GiftCard, null=True, blank=True, on_delete=models.CASCADE,)
+    device = models.ForeignKey(Device, null=True, blank=True, on_delete=models.CASCADE,)
+
 
     class Meta:
         managed = True

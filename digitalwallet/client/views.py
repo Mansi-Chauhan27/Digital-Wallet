@@ -41,17 +41,29 @@ class RegisterView(generics.GenericAPIView):
 
     
     def post(self, request, *args, **kwargs):
-        serializer =  self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user=serializer.save()
-        print('erfsdfsdf',serializer.validated_data)
-        print('request.data',request.data)
-        if(request.data['is_admin']==True):
-            group = Group.objects.all()
-        print(group)
-        return Response({
-            "token":Token.objects.get(user=user).key
-        })
+        try:
+            serializer =  self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user=serializer.save()
+            print('erfsdfsdf',serializer.validated_data)
+            print('request.data',request.data,request.data['is_admin'])
+            if(request.data['is_admin']=='true'):
+                print('yfy')
+                my_group = Group.objects.get(name='admin') 
+                print(user,'sdasfsa',my_group)
+                my_group.user_set.add(user)
+            else:
+                my_group = Group.objects.get(name='customer') 
+                print(user,'sdasfsa',my_group)
+                my_group.user_set.add(user)
+
+            return Response({
+                "token":Token.objects.get(user=user).key,'msg':'Success'
+            })
+        except Exception as e:
+            return Response({
+                "msg":'error'
+            })
     # print(serializer_class.data)
     
     

@@ -89,7 +89,7 @@ class GenerateCardNumber(APIView):
         # return Response({'msg': 'Success'},status=HTTP_200_OK)
 
 
-
+# to make transacion via devices using key
 
 class Transaction(APIView):
     permission_classes = (HasDeviceAPIKey)
@@ -237,12 +237,13 @@ class Transaction(APIView):
         # return Response({'msg': 'Success'},status=HTTP_200_OK)
 
 
-
+# to get and add giftcards
 
 class GiftCardTransaction(APIView):
     permission_classes = (IsAuthenticated,)
     print('sdafdas')
 
+    # to Retrieve Gift Cards
     def get(self,request):
         result={}
         queryset = GiftCard.objects.all()
@@ -251,7 +252,7 @@ class GiftCardTransaction(APIView):
         return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
 
 
-    # to top up 
+    # to Add Gift Card
     def post(self,request):
         result={}
         # data will contain giftcard
@@ -277,8 +278,57 @@ class GiftCardTransaction(APIView):
         return Response({'data':result},status=HTTP_200_OK)
 
 
+# to get balnace and history of a user
+
+class GetBalance(APIView):
+    permission_classes = (IsAuthenticated,)
+    print('sdafdas')
+
+    # to Retrieve Gift Cards
+    def get(self,request):
+        result={}
+        queryset = GiftCard.objects.all()
+        serializer = GiftCardSerializer(queryset, many=True)
+        result['data'] = serializer.data
+        return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
 
 
+    # to Get BAlance
+    def post(self,request):
+        result={}
+        action=request.data['data']['action']
+        try:
+            if(action=='get_balance'):
+                print(request.data)
+                queryset = CardDetails.objects.get(user_id=request.data['data']['user_id'])
+                serializer = CardDetailsSerialzer(queryset, many=False)
+                result['data'] = serializer.data
+                result['msg']='Success'
+            else:
+                print(request.data)
+                # queryset = TransactionDetails.objects.select_related('gift_card').all()
+                queryset = CardDetails.objects.get(user_id=32)
+                serializer = CardDetailsSerialzer(queryset, many=False)
+                print('serializer.data[]',serializer.data)
+                # queryset = TransactionDetails.objects.filter(card=serializer.data['id']).all()
+                # print(queryset)
+                queryset = TransactionDetails.objects.filter(card__id=serializer.data['id']).values('device__name','gift_card__gift_card_no','balance','credit_amount','debit_amount','updated_at').all()
+                # print(queryset,)
+                # print(queryset.card_set.all())
+                # print('7yiuyiuyiu',TransactionDetails.objects.filter(card__id=1))
+                # serializer = TransactionDetailsSerialzer(queryset, many=True)
+                result['data'] = list(queryset)
+                result['msg']='Success'
+
+            
+        except Exception as e:
+            print(e)
+            result['msg']='Error'
+        return Response({'data':result},status=HTTP_200_OK)
+
+
+
+# to topup money into users card
     
 class GiftCardTopup(APIView):
     permission_classes = (IsAuthenticated,)

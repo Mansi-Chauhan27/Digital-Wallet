@@ -5,6 +5,7 @@ from rest_framework.authtoken.models import Token
 from django.dispatch import receiver
 from django.conf import settings
 from django.db.models.signals import post_save
+from datetime import datetime, timedelta
 
 # Create your models here.
 
@@ -86,7 +87,7 @@ class RegisterUserOtp(models.Model):
         primary_key=True,
     )
     otp = models.IntegerField()
-    expiry = models.DateTimeField(auto_now_add=True)
+    expiry = models.DateTimeField(default=datetime.now()+timedelta(hours=2))
 
 
 
