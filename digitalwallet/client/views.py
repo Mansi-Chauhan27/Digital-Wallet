@@ -10,7 +10,7 @@ from rest_framework.status import (
 )
 from rest_framework.response import Response
 from rest_framework.views import APIView
-# from django.contrib.auth.models import User
+from django.contrib.auth.models import Group
 from .serializers import RegisterSerializer, RegisterUserOtpSerialzer
 from rest_framework import generics, serializers
 from .models import User, RegisterUserOtp
@@ -44,7 +44,11 @@ class RegisterView(generics.GenericAPIView):
         serializer =  self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user=serializer.save()
-        print('erfsdfsdf',user)
+        print('erfsdfsdf',serializer.validated_data)
+        print('request.data',request.data)
+        if(request.data['is_admin']==True):
+            group = Group.objects.all()
+        print(group)
         return Response({
             "token":Token.objects.get(user=user).key
         })
@@ -109,7 +113,9 @@ def verifyotp(request):
     # token, _ = Token.objects.get_or_create(user=user)
     # return Response({'token': token.key,'email':user.email,'is_admin':user.is_admin},
     #                 status=HTTP_200_OK)
-    
+
+
+   
 # @csrf_exempt
 # @api_view(["GET"])
 # @permission_classes((AllowAny,))
@@ -159,7 +165,7 @@ class Customers(APIView):
     
     @method_decorator(group_required('admin'))
     def get(self, request, *args, **kwargs):
-        print('sfs',request.user)
+        print('sfs',request.user,request.user.is_admin)
         user_list = list(User.objects.filter(is_customer=True, is_active=True).values('first_name','last_name','email'))
         print('efwf')
         return Response({'msg': 'Success','data':user_list},status=HTTP_200_OK)

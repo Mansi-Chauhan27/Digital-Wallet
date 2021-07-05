@@ -48,6 +48,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'transaction',
     'guardian',
+    'devices',
+    "rest_framework_api_key",
 ]
 
 MIDDLEWARE = [
@@ -139,7 +141,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated', )
+        'rest_framework.permissions.IsAuthenticated', 
+        # "rest_framework_api_key.permissions.HasAPIKey",
+        )
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -161,3 +165,6 @@ AUTHENTICATION_BACKENDS = (
 )
 
 # GUARDIAN_GET_INIT_ANONYMOUS_USER = 'core.models.get_custom_anon_user'
+
+# SENDGRID KEY
+SENDGRID_KEY =  env('SENDGRID_KEY')
