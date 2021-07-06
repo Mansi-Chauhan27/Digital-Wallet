@@ -10,9 +10,24 @@ from rest_framework.authtoken.models import Token
 
 
 class DeviceSerialzer(serializers.ModelSerializer):
+    # api_keys_id = serializers.CharField(read_only=True)
+    # print(api_keys_id,'sdasfasfsf')
     class Meta:
         model = Device
         fields = '__all__'
+        # fields = ['name','active','id','api_keys_id']
+
+    def __init__(self, *args, **kwargs):
+        kwargs['partial'] = True
+        super(DeviceSerialzer, self).__init__(*args, **kwargs)
+
+    def update(self, instance, validated_data):
+        print('this - here',instance)
+        demo = Device.objects.get(pk=instance.id)
+        Device.objects.filter(pk=instance.id)\
+                           .update(**validated_data)
+        return demo
+
 
 class DeviceAPIKeySerialzer(serializers.ModelSerializer):
     class Meta:

@@ -70,3 +70,20 @@ class RegisterUserOtpSerialzer(serializers.ModelSerializer):
     class Meta:
         model = RegisterUserOtp
         fields = '__all__'
+
+
+class UserSerialzer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = '__all__'
+
+    def __init__(self, *args, **kwargs):
+        kwargs['partial'] = True
+        super(UserSerialzer, self).__init__(*args, **kwargs)
+
+    def update(self, instance, validated_data):
+        print('this - here',instance)
+        demo = User.objects.get(pk=instance.id)
+        User.objects.filter(pk=instance.id)\
+                           .update(**validated_data)
+        return demo

@@ -11,7 +11,7 @@ from rest_framework.status import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.models import Group
-from .serializers import RegisterSerializer, RegisterUserOtpSerialzer
+from .serializers import RegisterSerializer, RegisterUserOtpSerialzer, UserSerialzer
 from rest_framework import generics, serializers
 from .models import User, RegisterUserOtp
 from django.utils.decorators import method_decorator
@@ -58,7 +58,7 @@ class RegisterView(generics.GenericAPIView):
                 my_group.user_set.add(user)
 
             return Response({
-                "token":Token.objects.get(user=user).key,'msg':'Success'
+                "token":Token.objects.get(user=user).key,'msg':'Success','is_admin':request.data['is_admin']
             })
         except Exception as e:
             return Response({
@@ -171,14 +171,49 @@ def verifyotp(request):
 #     return Response({'msg': 'Success','data':user_list},status=HTTP_200_OK)
 
 
+# class Customers(APIView):
+#     permission_classes = (IsAuthenticated,)
+#     print('sdafdas')
+    
+#     @method_decorator(group_required('admin'))
+#     def get(self, request, *args, **kwargs):
+#         print('sfs',request.user,request.user.is_admin)
+#         user_list = list(User.objects.filter(is_customer=True).values('id','first_name','last_name','email','is_active'))
+#         print('efwf')
+#         return Response({'msg': 'Success','data':user_list},status=HTTP_200_OK)
+
+#     @method_decorator(group_required('admin'))
+#     def delete(self, request, *args, **kwargs):
+#         result={}
+#         try:
+#             print('sdsd',request.data)
+#             u = User.objects.get(username = request.data['id'])
+#             print(u)
+#             u.delete()
+#             result['msg'] = 'User Delete Successfully'
+
+#         except User.DoesNotExist:
+#             result['msg'] = "User doesnot exist"   
+#             return Response({'msg': 'Success'},status=HTTP_404_NOT_FOUND)
+
+#         except Exception as e: 
+#             return Response({'msg': 'Something Went Wrong!'},status=HTTP_400_BAD_REQUEST)
+ 
+#         return Response({'msg': 'Success'},status=HTTP_200_OK)
+
+#     # print(serializer_class.data)
+    
+ 
+
+
+# Actions on Customer
 class Customers(APIView):
     permission_classes = (IsAuthenticated,)
-    print('sdafdas')
     
     @method_decorator(group_required('admin'))
     def get(self, request, *args, **kwargs):
         print('sfs',request.user,request.user.is_admin)
-        user_list = list(User.objects.filter(is_customer=True, is_active=True).values('first_name','last_name','email'))
+        user_list = list(User.objects.filter(is_customer=True).values('id','first_name','last_name','email','is_active','carddetails__id'))
         print('efwf')
         return Response({'msg': 'Success','data':user_list},status=HTTP_200_OK)
 
@@ -201,6 +236,23 @@ class Customers(APIView):
  
         return Response({'msg': 'Success'},status=HTTP_200_OK)
 
-    # print(serializer_class.data)
-    
- 
+    # Make User Inactive
+    @method_decorator(group_required('admin'))
+    def put(self, request, format=None):
+        result={}
+        print(request.data,'huijoijoi')
+        user_data = User.objects.get(id=request.data['data']['id'])
+        print(request.user,'uyiuyi')
+        serializer = UserSerialzer(user_data, data={'is_active': False}, partial=True)
+
+        if serializer.is_valid():
+            print('gygyg',serializer.validated_data)
+            serializer.save()
+            print('sffafsa')
+            result['msg']='Success'
+            print(serializer.data)
+            return Response({'data':result}, status = HTTP_200_OK) 
+        else:
+            result['msg']='Error'
+            return Response({'data':result}, status = HTTP_400_BAD_REQUEST) 
+

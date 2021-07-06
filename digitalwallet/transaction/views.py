@@ -61,7 +61,7 @@ from devices.permissions import HasDeviceAPIKey
 #     # return Response({'msg': 'Success'},status=HTTP_200_OK)
 
 
-
+# to generate card Number
 class GenerateCardNumber(APIView):
     permission_classes = (IsAuthenticated,)
     print('sdafdas')
@@ -76,8 +76,10 @@ class GenerateCardNumber(APIView):
             card_no = cardgen()
 
         print('request.data',request.data)
+        data = request.data['data']
+        print(data)
         if card_no:
-            u = User.objects.get(id=request.data['id'])
+            u = User.objects.get(id=data['id'])
             card = CardDetails(user=u,card_number=card_no)
             card.save()
             print(card.card_number,'card_number')

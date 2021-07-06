@@ -25,21 +25,25 @@ from rest_framework.permissions import IsAuthenticated
 
 
 
+# to get/add/deactivate devices
 class DeviceDetails(APIView):
     permission_classes = (IsAuthenticated,)
     print('sdafdas')
 
+    @method_decorator(group_required('admin'))
     def get(self,request):
         result={}
         queryset = Device.objects.all()
-        print(request,'uhiuhu')
-        # print('queryset',queryset,DeviceAPIKey.objects.select_related().all().values())
+        print(queryset,'uhiuhu')
+        print('queryset',Device.objects.values('name','active','id','api_keys__id'))
         serializer = DeviceSerialzer(queryset, many=True)
         print(serializer.data)
         result['data'] = serializer.data
+        result['data'] = list(Device.objects.values('name','active','id','api_keys__id').all())
         return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
 
     # Add a device
+    @method_decorator(group_required('admin'))
     def post(self,request):
         result={}
         # data will contain giftcard
@@ -61,11 +65,34 @@ class DeviceDetails(APIView):
         return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
         # return Response({'msg': 'Success'},status=HTTP_200_OK)
 
+    @method_decorator(group_required('admin'))
+    def put(self, request, format=None):
+        result={}
+        print(request.data,'huijoijoi')
+        user_data = Device.objects.get(id=request.data['data']['id'])
+        print(request.user,'uyiuyi')
+        serializer = DeviceSerialzer(user_data, data={'active': False}, partial=True)
 
+        if serializer.is_valid():
+            print('gygyg',serializer.validated_data)
+            serializer.save()
+            print('sffafsa')
+            result['msg']='Success'
+            print(serializer.data)
+            device_api_key = DeviceAPIKey.objects.filter(device_id=request.data['data']['id'])
+            if device_api_key:
+                device_api_key.update(revoked=True)
+            return Response({'data':result}, status = HTTP_200_OK) 
+        else:
+            result['msg']='Error'
+            return Response({'data':result}, status = HTTP_400_BAD_REQUEST) 
+
+# to generate device key
 class DeviceApiKeyDetails(APIView):
     permission_classes = (IsAuthenticated,)
     print('sdafdas')
 
+    @method_decorator(group_required('admin'))
     def get(self,request):
         result={}
         queryset = DeviceAPIKey.objects.all()
@@ -76,7 +103,8 @@ class DeviceApiKeyDetails(APIView):
     
 
 
-    # to top up 
+    # to generate key
+    @method_decorator(group_required('admin'))
     def post(self,request):
         result={}
         # data will contain giftcard
