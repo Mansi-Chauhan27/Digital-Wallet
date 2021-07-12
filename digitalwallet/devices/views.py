@@ -1,3 +1,5 @@
+
+from client.models import User
 from django.contrib.auth import authenticate
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
@@ -21,6 +23,8 @@ from rest_framework.authtoken.models import Token
 from django.contrib.auth.models import Permission
 from guardian.shortcuts import assign_perm
 from rest_framework.permissions import IsAuthenticated
+from client.views import generateCardNumber
+from transaction.models import Card
 # from rest_framework_api_key.models import APIKey
 
 
@@ -33,23 +37,25 @@ class DeviceDetails(APIView):
     @method_decorator(group_required('admin'))
     def get(self,request):
         result={}
+        # userid= request.user.id
+        userid= 66
         queryset = Device.objects.all()
         print(queryset,'uhiuhu')
-        print('queryset',Device.objects.values('name','active','id','api_keys__id'))
+        print('queryset',Device.objects.filter(user_id=userid).values('name','active','id','api_keys__id'))
         serializer = DeviceSerialzer(queryset, many=True)
         print(serializer.data)
         result['data'] = serializer.data
-        result['data'] = list(Device.objects.values('name','active','id','api_keys__id').all())
+        result['data'] = list(Device.objects.filter(user_id=userid).values('name','active','id','api_keys__id').all())
         return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
 
     # Add a device
-    @method_decorator(group_required('admin'))
+    # @method_decorator(group_required('admin'))
     def post(self,request):
         result={}
         # data will contain giftcard
         data=request.data['data']
         print(request,'uhiuhu')
-        device_data  = {'name':data['device_name'],'is_active':False}
+        device_data  = {'name':data['device_name'],'is_active':False,'user':66}
 
         device_serializer = DeviceSerialzer(data = device_data)
         print('serializer',device_serializer)
@@ -57,7 +63,10 @@ class DeviceDetails(APIView):
             if device_serializer.is_valid(raise_exception=True):
                 trans = device_serializer.save()
                 # print('balance',balance)
-                result['data':trans]
+                cardid = generateCardNumber(self,request.user.id,balance=0)
+                print('datadata',cardid)
+                Device.objects.filter(id=trans.id).update(card=cardid)
+                # result['data']=trans
 
             
         except Exception as e:
@@ -104,10 +113,11 @@ class DeviceApiKeyDetails(APIView):
 
 
     # to generate key
-    @method_decorator(group_required('admin'))
+    @method_decorator(group_required('owner'))
     def post(self,request):
         result={}
         # data will contain giftcard
+        print(request.user,'huihiuhuiu')
         data=request.data['data']
         # device_api_key_data  = {'name':'apikey','device':2,}
 
@@ -123,7 +133,7 @@ class DeviceApiKeyDetails(APIView):
             print(api_key,'keyyy',key)
             result['data']=key
             if key:
-                Device.objects.filter(id=data['device_id']).update(is_active=True)
+                Device.objects.filter(id=data['device_id']).update(active=True)
         except Exception as e:
             print(e)
         return Response({'msg': 'Success','data':result},status=HTTP_200_OK)

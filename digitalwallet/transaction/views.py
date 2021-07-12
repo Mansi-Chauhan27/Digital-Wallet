@@ -12,7 +12,7 @@ from rest_framework.status import (
 from rest_framework.response import Response
 # from django.contrib.auth.models import User
 from rest_framework import generics, serializers
-from .models import CardDetails, GiftCard, Task, TransactionDetails
+from .models import CardDetails, GiftCard, Task, TransactionDetails, Card, Transaction
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from client.decorators import admin_required, group_required
@@ -20,9 +20,14 @@ from rest_framework.authtoken.models import Token
 from common.helper.utils import cardgen
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
-from .serializers import CardDetailsSerialzer, TransactionDetailsSerialzer, GiftCardSerializer
+from .serializers import CardDetailsSerialzer, TransactionDetailsSerialzer, GiftCardSerializer, CardSerializer, TransactionSerializer
 from devices.permissions import HasDeviceAPIKey
+from django.db.models import Q
+from devices.models import Device
+from django.db import transaction
 
+
+# from transaction.models import Card
 
 # class RegisterView(generics.CreateAPIView):
 #     queryset = User.objects.all()
@@ -67,6 +72,7 @@ class GenerateCardNumber(APIView):
     print('sdafdas')
 
     @method_decorator(group_required('admin'))
+    @transaction.atomic
     def post(self,request):
         print('dwef')
         print(request.user)
@@ -93,7 +99,7 @@ class GenerateCardNumber(APIView):
 
 # to make transacion via devices using key
 
-class Transaction(APIView):
+class Transaction1(APIView):
     permission_classes = (HasDeviceAPIKey)
     print('sdafdas')
 
@@ -280,56 +286,6 @@ class GiftCardTransaction(APIView):
         return Response({'data':result},status=HTTP_200_OK)
 
 
-# to get balnace and history of a user
-
-class GetBalance(APIView):
-    permission_classes = (IsAuthenticated,)
-    print('sdafdas')
-
-    # to Retrieve Gift Cards
-    def get(self,request):
-        result={}
-        queryset = GiftCard.objects.all()
-        serializer = GiftCardSerializer(queryset, many=True)
-        result['data'] = serializer.data
-        return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
-
-
-    # to Get BAlance
-    def post(self,request):
-        result={}
-        action=request.data['data']['action']
-        try:
-            if(action=='get_balance'):
-                print(request.data)
-                queryset = CardDetails.objects.get(user_id=request.data['data']['user_id'])
-                serializer = CardDetailsSerialzer(queryset, many=False)
-                result['data'] = serializer.data
-                result['msg']='Success'
-            else:
-                print(request.data)
-                # queryset = TransactionDetails.objects.select_related('gift_card').all()
-                queryset = CardDetails.objects.get(user_id=32)
-                serializer = CardDetailsSerialzer(queryset, many=False)
-                print('serializer.data[]',serializer.data)
-                # queryset = TransactionDetails.objects.filter(card=serializer.data['id']).all()
-                # print(queryset)
-                queryset = TransactionDetails.objects.filter(card__id=serializer.data['id']).values('device__name','gift_card__gift_card_no','balance','credit_amount','debit_amount','updated_at').all()
-                # print(queryset,)
-                # print(queryset.card_set.all())
-                # print('7yiuyiuyiu',TransactionDetails.objects.filter(card__id=1))
-                # serializer = TransactionDetailsSerialzer(queryset, many=True)
-                result['data'] = list(queryset)
-                result['msg']='Success'
-
-            
-        except Exception as e:
-            print(e)
-            result['msg']='Error'
-        return Response({'data':result},status=HTTP_200_OK)
-
-
-
 # to topup money into users card
     
 class GiftCardTopup(APIView):
@@ -382,3 +338,217 @@ class GiftCardTopup(APIView):
             result['msg']='Error'
         return Response({'data':result},status=HTTP_200_OK)
     
+
+
+# to get balnace and history of a user
+from braces.views import GroupRequiredMixin
+
+class GetBalance(GroupRequiredMixin,APIView):
+    permission_classes = (IsAuthenticated,)
+    print('sdafdas')
+    #required
+    group_required = ["customer","admin"]
+    raise_exception = True
+    redirect_unauthenticated_users = False
+
+
+    # to Retrieve Gift Cards
+    def get(self,request):
+        print(request.user,'frerere')
+        result={}
+        queryset = GiftCard.objects.all()
+        serializer = GiftCardSerializer(queryset, many=True)
+        result['data'] = serializer.data
+        return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
+
+
+    # to Get BAlance
+    @transaction.atomic
+    def post(self,request):
+        result={}
+        action=request.data['data']['action']
+        print(request.user,'frerere')
+        try:
+            if(action=='get_balance'):
+                print(request.data)
+                # userid=request.data['data']['user_id']
+                userid=request.user.id
+                queryset = Card.objects.filter(user_id=userid)
+                serializer = CardSerializer(queryset, many=True)
+                result['data'] = serializer.data
+                result['msg']='Success'
+            else:
+                print(request.data)
+                data=request.data['data']
+                card_id=data['card_id']
+                # card_id = 1
+                # queryset = list(Card.objects.filter(id=4).values('id'))
+                # card_id_list = [d['id'] for d in queryset]
+                ###############
+                # serializer = CardSerializer(queryset, many=True)
+                # print('serializer.data[]',serializer.data)
+                # for item in serializer.data:
+                #     print(item)
+                # print(queryset,card_id_list)
+                # Q(first_name__startswith='R')|Q(last_name__startswith='D')
+                transaction_queryset = list(Transaction.objects.filter(Q(to_card = card_id)|Q(from_card = card_id)).values('id','to_card__card_number','to_card__id','to_card__user_id','from_card__id','from_card__user_id','amount','user__email','from_card__card_number').all())
+                device_queryset = list(Device.objects.all().values('id','name','card__id'))
+                # user_queryset = list(Device.objects.all().values('id','email','card__id'))
+                # transaction_queryset = Transaction.objects.get(to_card__in=card_id_list,from_card__in=card_id_list).values('to_card__card_number','amount','created_at').device_set.all()
+                print(list(transaction_queryset),'dfsdfdsf',device_queryset)
+                data=[]
+                
+                for tr in transaction_queryset:
+                    to = None
+                    fr = None
+                    status=None
+                    print(tr['to_card__id'])
+                    y=[x for x in device_queryset if x['card__id'] == tr['to_card__id']]
+                    if(y):
+                        to = y[0]['name']
+                    else:
+                        # pass
+                        to=list(User.objects.filter(id=tr['to_card__user_id']).values('email'))[0]['email']
+
+                    f=[x for x in device_queryset if x['card__id'] == tr['from_card__id']]
+                    if(f):
+                        fr = f[0]['name']
+                    else:
+                        # pass
+                        fr = list(User.objects.filter(id=tr['from_card__user_id']).values('email'))[0]['email']
+                    status = 'Credit' if(tr['to_card__id']==card_id) else 'Debit'
+                    source = to if(status=='Debit') else fr
+                    data.append({'id':tr['id'],'amount':tr['amount'],'debit_from':fr,'credit_to':to, 'to_card_id':tr['to_card__card_number'],'from_card_id':tr['from_card__card_number'],'status':status,'source':source})
+                result['data'] =data
+                result['msg']='Success'
+
+            
+        except Exception as e:
+            print(e)
+            result['msg']='Error'
+        return Response({'data':result},status=HTTP_200_OK)
+
+
+# to transfer money 
+class TransferMoney(GroupRequiredMixin,APIView):
+    permission_classes = (IsAuthenticated,)
+    print('sdafdas')
+    group_required = ["customer","admin"]
+    raise_exception = True
+    redirect_unauthenticated_users = False
+
+
+    # to transfer money 
+    @transaction.atomic
+    def post(self,request):
+        result={}
+        # data will contain giftcard
+        data=request.data['data']
+        print('hiuhiho',data)
+        action = "to_customer"
+        if action == "to_customer":
+            from_card_id = data['from_card_id']
+            to_card_id = data['to_card_id']
+            amount_to_be_transferred = int(data['amount_to_be_transferred'])
+            from_card_id_data = Card.objects.get(id=from_card_id)
+            from_card_id_serializer = CardSerializer(from_card_id_data, many=False)
+            # card = CardDetails.objects.filter(user_id=data['user_id']).values('id')
+            # card_id = serializer.data['id']
+            balance=from_card_id_serializer.data['balance']
+            print('balancebalance',balance,balance>amount_to_be_transferred)
+            to_card_id_data = Card.objects.get(id=to_card_id)
+            to_card_id_serializer = CardSerializer(to_card_id_data, many=False)
+            # card = CardDetails.objects.filter(user_id=data['user_id']).values('id')
+            # card_id = serializer.data['id']
+            to_card_id_balance=to_card_id_serializer.data['balance']
+            if(int(balance)>=int(amount_to_be_transferred)):
+                # balance = tr['balance']
+                # if balance>=data['debit_amount']:
+                #     balance +=data['credit_amount']
+                balance -= amount_to_be_transferred
+                # else:
+                result['msg'] = 'Success'
+
+                transaction_data  = {
+                                'amount':amount_to_be_transferred,
+                                'from_card': from_card_id,
+                                'to_card':to_card_id,
+                                'user': request.user.id,
+                                }
+
+                transaction_serializer = TransactionSerializer(data = transaction_data)
+                print('serializer',transaction_serializer)
+                # try:
+                if transaction_serializer.is_valid(raise_exception=True):
+                    trans = transaction_serializer.save()
+                    print('balance',balance)
+                    # result['data':trans]
+                    Card.objects.filter(id=from_card_id).update(balance=balance)
+                    Card.objects.filter(id=to_card_id).update(balance=to_card_id_balance+amount_to_be_transferred)
+                    result['msg']='Success'
+                
+                # except Exception as e:
+                #     print(e)
+                else:
+                    result['msg']='Error'
+
+
+            else:
+                result['msg'] = 'Insufficient Balance'
+
+            # print('balance',balance)
+            # gift_card_id =  data['gift_card_id'] if data['gift_card_id'] else None
+            return Response({'data':result},status=HTTP_200_OK)
+        
+# to get cards
+class GetCards(GroupRequiredMixin,APIView):
+    permission_classes = (IsAuthenticated,)
+    print('sdafdas')
+    group_required = ["customer","admin"]
+    raise_exception = True
+    redirect_unauthenticated_users = False
+
+    
+    @transaction.atomic 
+    def post(self,request):
+        result={}
+        # data will contain giftcard
+        data=request.data['data']
+        print('request.dataddddd',request.data,data)
+        # userid=data['userid']
+        userid=request.user.id
+        action = data['action']
+        if action == "get_users_cards":
+            result={}
+            queryset = Card.objects.filter(user=userid)
+            serializer = CardSerializer(queryset, many=True)
+            result['data'] = serializer.data
+            return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
+
+        # if action == "get_other_users_cards":
+        #     result={}
+        #     devices_queryset  =  list(Device.objects.filter(~Q(card=None)).values('card__id','name'))
+        #     print('devices_querysetdevices_queryset',devices_queryset)
+        #     card_id_list = [d['card__id']  for d in devices_queryset]
+        #     print(devices_queryset,'fdf')
+        #     queryset = list(Card.objects.filter(~Q(user=userid)).filter(~Q(id__in=card_id_list)).values())
+        #     print('sdsfjjjjjjds',queryset)
+        #     # serializer = CardSerializer(queryset, many=True)
+        #     # result['data'] = serializer.data
+        #     result['devices'] = devices_queryset
+        #     result['customers'] = queryset
+        #     return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
+
+        if action == "get_other_users_cards":
+            result={}
+            devices_queryset  =  list(Device.objects.filter(~Q(card=None)).values('card__id','name'))
+            print('devices_querysetdevices_queryset',devices_queryset)
+            card_id_list = [d['card__id']  for d in devices_queryset]
+            print(devices_queryset,'fdf')
+            queryset = list(Card.objects.filter(~Q(user=userid)).values())
+            print('sdsfjjjjjjds',queryset)
+            # serializer = CardSerializer(queryset, many=True)
+            # result['data'] = serializer.data
+            result['devices'] = devices_queryset
+            result['customers'] = queryset
+            return Response({'msg': 'Success','data':result},status=HTTP_200_OK)

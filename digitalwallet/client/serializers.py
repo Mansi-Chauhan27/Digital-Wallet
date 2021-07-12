@@ -1,10 +1,10 @@
 from django.db.models import fields
 from rest_framework import serializers
 # from django.contrib.auth.models import Token
-from .models import User, RegisterUserOtp
+from .models import User, RegisterUserOtp, Otp
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
-from client.tasks import send_mail_task
+from client.tasks import send_mail_task, send_mail_task2
 from rest_framework.authtoken.models import Token
 
 
@@ -47,7 +47,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             
         )
         print('yyufyuf',user)
-        send_mail_task.delay(user.id)
+        # send_mail_task.delay(user.id)
+        send_mail_task2.delay(user.id)
         print('rfrfer')
         user.set_password(validated_data['password'])
         user.save()
@@ -69,6 +70,11 @@ class RegisterSerializer(serializers.ModelSerializer):
 class RegisterUserOtpSerialzer(serializers.ModelSerializer):
     class Meta:
         model = RegisterUserOtp
+        fields = '__all__'
+
+class OtpSerialzer(serializers.ModelSerializer):
+    class Meta:
+        model = Otp
         fields = '__all__'
 
 

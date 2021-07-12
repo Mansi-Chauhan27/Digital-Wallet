@@ -44,7 +44,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'client',
+    'client.apps.ClientConfig',
     'corsheaders',
     'transaction',
     'guardian',
@@ -155,9 +155,12 @@ CORS_ORIGIN_WHITELIST = [
 
 CELERY_BROKER_URL = 'amqp://localhost'
 
-LOGIN_REDIRECT_URL = '/client/login'
+# LOGIN_REDIRECT_URL = '/client/login'
 
-LOGIN_URL = '/client/login'
+# LOGIN_URL = '/client/login'
+LOGIN_REDIRECT_URL = '/api-token-auth/'
+
+LOGIN_URL = '/api-token-auth/'
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend', # this is default

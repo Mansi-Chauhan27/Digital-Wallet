@@ -2,10 +2,11 @@ from celery import shared_task
 from django.conf import settings
 import os
 import time
-from client.models import RegisterUserOtp, User
+from client.models import RegisterUserOtp, User, Otp
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from common.helper.utils import otpgen
+from datetime import datetime, timedelta
 
 @shared_task
 def send_mail_task(userid):
@@ -19,10 +20,29 @@ def send_mail_task(userid):
     u = User.objects.get(id=userid)
     sendEmailForVerification(otp,u.email)
     if RegisterUserOtp.objects.filter(user=u):
-        RegisterUserOtp.objects.filter(user=u).update(otp=otp)
+        RegisterUserOtp.objects.filter(user=u).update(otp=otp,expiry=datetime.now()+timedelta(hours=2))
     else:
-        user = RegisterUserOtp(user=u,otp=otp)
+        user = RegisterUserOtp(user=u,otp=otp,expiry=datetime.now()+timedelta(hours=2))
         user.save()
+
+@shared_task
+def send_mail_task2(userid):
+    print("*****"*10)
+    print("QUEUE Started")
+    print("Time sleep started")
+    time.sleep(15)
+    print("Time sleep Ended")
+    print("QUEUE Ended")
+    otp=otpgen()
+    u = User.objects.get(id=userid)
+    sendEmailForVerification(otp,u.email)
+    # if Otp.objects.filter(user=u):
+    #     print('hereee')
+    #     Otp.objects.filter(user_id=userid).update(otp=otp,is_used=False,userid=userid)
+    # else:
+    #     print('herererereee')
+    user = Otp(user_id=userid,otp=otp,is_used=False)
+    user.save()
 
 
 

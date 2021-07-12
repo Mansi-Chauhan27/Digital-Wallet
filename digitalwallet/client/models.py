@@ -6,7 +6,8 @@ from django.dispatch import receiver
 from django.conf import settings
 from django.db.models.signals import post_save
 from datetime import datetime, timedelta
-
+from django.db.models import Q
+# import client.views 
 # Create your models here.
 
 
@@ -63,15 +64,6 @@ class User(AbstractUser):
 
     objects = UserManager()
 
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_auth_token(sender, instance=None, created=False, **kwargs):
-    if created:
-        Token.objects.create(user=instance)
-
-    
-
-    
-
 
 class RegisterUserOtp(models.Model):
     
@@ -88,6 +80,37 @@ class RegisterUserOtp(models.Model):
     )
     otp = models.IntegerField()
     expiry = models.DateTimeField(default=datetime.now()+timedelta(hours=2))
+
+
+class VerifyUserOtp(models.Model):
+    
+    # email = models.EmailField(
+    #     verbose_name='email address',
+    #     max_length=255,
+    #     unique=True,
+    # )
+    # username = None
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        primary_key=True,
+    )
+    otp = models.IntegerField()
+    expiry = models.DateTimeField(default=datetime.now()+timedelta(hours=2))
+
+class Otp(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="user_id",
+    )
+    otp = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+
+    class Meta:
+        db_table = "otp"
+        managed  = True
 
 
 
