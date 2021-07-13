@@ -46,12 +46,12 @@ class RegisterSerializer(serializers.ModelSerializer):
             is_customer=validated_data['is_customer'],
             
         )
-        print('yyufyuf',user)
         # send_mail_task.delay(user.id)
-        send_mail_task2.delay(user.id)
-        print('rfrfer')
+        
         user.set_password(validated_data['password'])
         user.save()
+        print('user.id',user.id)
+        send_mail_task2.delay(user.id)
         token=Token.objects.get(user=user).key
         print('token',token)
         # data={'token':}

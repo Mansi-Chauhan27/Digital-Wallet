@@ -21,9 +21,9 @@ from common.helper.utils import cardgen
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from .serializers import CardDetailsSerialzer, TransactionDetailsSerialzer, GiftCardSerializer, CardSerializer, TransactionSerializer
-from devices.permissions import HasDeviceAPIKey
+from apps.devices.permissions import HasDeviceAPIKey
 from django.db.models import Q
-from devices.models import Device
+from apps.devices.models import Device
 from django.db import transaction
 
 
@@ -74,7 +74,6 @@ class GenerateCardNumber(APIView):
     @method_decorator(group_required('admin'))
     @transaction.atomic
     def post(self,request):
-        print('dwef')
         print(request.user)
         result={}
         card_no = cardgen()
@@ -340,9 +339,10 @@ class GiftCardTopup(APIView):
     
 
 
-# to get balnace and history of a user
+
 from braces.views import GroupRequiredMixin
 
+# to get balnace and history of a user
 class GetBalance(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     print('sdafdas')
@@ -373,7 +373,8 @@ class GetBalance(GroupRequiredMixin,APIView):
                 print(request.data)
                 # userid=request.data['data']['user_id']
                 userid=request.user.id
-                queryset = Card.objects.filter(user_id=userid)
+                # queryset = Card.objects.filter(user_id=userid)
+                queryset = Card.getUsersCards(self,userid)
                 serializer = CardSerializer(queryset, many=True)
                 result['data'] = serializer.data
                 result['msg']='Success'
@@ -391,11 +392,13 @@ class GetBalance(GroupRequiredMixin,APIView):
                 #     print(item)
                 # print(queryset,card_id_list)
                 # Q(first_name__startswith='R')|Q(last_name__startswith='D')
-                transaction_queryset = list(Transaction.objects.filter(Q(to_card = card_id)|Q(from_card = card_id)).values('id','to_card__card_number','to_card__id','to_card__user_id','from_card__id','from_card__user_id','amount','user__email','from_card__card_number').all())
-                device_queryset = list(Device.objects.all().values('id','name','card__id'))
+                # transaction_queryset = list(Transaction.objects.filter(Q(to_card = card_id)|Q(from_card = card_id)).values('id','to_card__card_number','to_card__id','to_card__user_id','from_card__id','from_card__user_id','amount','user__email','from_card__card_number').all())
+                transaction_queryset = Transaction.getTransactionDetailsByCardId(self,card_id)
+                # device_queryset = list(Device.objects.all().values('id','name','card__id'))
+                device_queryset = Device.getAllDevices(self)
                 # user_queryset = list(Device.objects.all().values('id','email','card__id'))
                 # transaction_queryset = Transaction.objects.get(to_card__in=card_id_list,from_card__in=card_id_list).values('to_card__card_number','amount','created_at').device_set.all()
-                print(list(transaction_queryset),'dfsdfdsf',device_queryset)
+                # print(list(transaction_queryset),'dfsdfdsf',device_queryset)
                 data=[]
                 
                 for tr in transaction_queryset:
@@ -408,14 +411,15 @@ class GetBalance(GroupRequiredMixin,APIView):
                         to = y[0]['name']
                     else:
                         # pass
-                        to=list(User.objects.filter(id=tr['to_card__user_id']).values('email'))[0]['email']
-
+                        # to=list(User.objects.filter(id=tr['to_card__user_id']).values('email'))[0]['email']
+                        to = User.getUserEmailById(self,tr['to_card__user_id'])
                     f=[x for x in device_queryset if x['card__id'] == tr['from_card__id']]
                     if(f):
                         fr = f[0]['name']
                     else:
                         # pass
-                        fr = list(User.objects.filter(id=tr['from_card__user_id']).values('email'))[0]['email']
+                        # fr = list(User.objects.filter(id=tr['from_card__user_id']).values('email'))[0]['email']
+                        fr = User.getUserEmailById(self,tr['from_card__user_id'])
                     status = 'Credit' if(tr['to_card__id']==card_id) else 'Debit'
                     source = to if(status=='Debit') else fr
                     data.append({'id':tr['id'],'amount':tr['amount'],'debit_from':fr,'credit_to':to, 'to_card_id':tr['to_card__card_number'],'from_card_id':tr['from_card__card_number'],'status':status,'source':source})
@@ -450,13 +454,15 @@ class TransferMoney(GroupRequiredMixin,APIView):
             from_card_id = data['from_card_id']
             to_card_id = data['to_card_id']
             amount_to_be_transferred = int(data['amount_to_be_transferred'])
-            from_card_id_data = Card.objects.get(id=from_card_id)
+            # from_card_id_data = Card.objects.get(id=from_card_id)
+            from_card_id_data = Card.getCardById(self,from_card_id)
             from_card_id_serializer = CardSerializer(from_card_id_data, many=False)
             # card = CardDetails.objects.filter(user_id=data['user_id']).values('id')
             # card_id = serializer.data['id']
             balance=from_card_id_serializer.data['balance']
             print('balancebalance',balance,balance>amount_to_be_transferred)
-            to_card_id_data = Card.objects.get(id=to_card_id)
+            # to_card_id_data = Card.objects.get(id=to_card_id)
+            to_card_id_data = Card.getCardById(self,to_card_id)
             to_card_id_serializer = CardSerializer(to_card_id_data, many=False)
             # card = CardDetails.objects.filter(user_id=data['user_id']).values('id')
             # card_id = serializer.data['id']
@@ -503,7 +509,6 @@ class TransferMoney(GroupRequiredMixin,APIView):
 # to get cards
 class GetCards(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
-    print('sdafdas')
     group_required = ["customer","admin"]
     raise_exception = True
     redirect_unauthenticated_users = False
@@ -512,15 +517,22 @@ class GetCards(GroupRequiredMixin,APIView):
     @transaction.atomic 
     def post(self,request):
         result={}
-        # data will contain giftcard
         data=request.data['data']
-        print('request.dataddddd',request.data,data)
         # userid=data['userid']
         userid=request.user.id
         action = data['action']
         if action == "get_users_cards":
             result={}
-            queryset = Card.objects.filter(user=userid)
+            # queryset = Card.objects.filter(user=userid)
+            queryset = Card.getUsersCards(self,userid)
+            serializer = CardSerializer(queryset, many=True)
+            result['data'] = serializer.data
+            return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
+        elif action == "get_users_cards_by_id":
+            result={}
+            # queryset = Card.objects.filter(user=userid)
+            userid = data['userid']
+            queryset = Card.getUsersCards(self,userid)
             serializer = CardSerializer(queryset, many=True)
             result['data'] = serializer.data
             return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
@@ -541,12 +553,15 @@ class GetCards(GroupRequiredMixin,APIView):
 
         if action == "get_other_users_cards":
             result={}
-            devices_queryset  =  list(Device.objects.filter(~Q(card=None)).values('card__id','name'))
-            print('devices_querysetdevices_queryset',devices_queryset)
+            # devices_queryset  =  list(Device.objects.filter(~Q(card=None),active=True).values('card__id','name','active'))
+            devices_queryset  =  Device.getDevices(self)
+            # print('devices_querysetdevices_queryset',devices_queryset)
             card_id_list = [d['card__id']  for d in devices_queryset]
-            print(devices_queryset,'fdf')
-            queryset = list(Card.objects.filter(~Q(user=userid)).values())
-            print('sdsfjjjjjjds',queryset)
+            # print(devices_queryset,'fdf')
+            # To get all users card
+            # queryset = list(Card.objects.filter(~Q(user=userid)).values())
+            queryset = Card.getOtherUsersCards(self,userid)
+            # print(queryset)
             # serializer = CardSerializer(queryset, many=True)
             # result['data'] = serializer.data
             result['devices'] = devices_queryset

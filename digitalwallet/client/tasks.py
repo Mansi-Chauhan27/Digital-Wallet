@@ -27,13 +27,14 @@ def send_mail_task(userid):
 
 @shared_task
 def send_mail_task2(userid):
-    print("*****"*10)
+    print("*****"*10,userid)
     print("QUEUE Started")
-    print("Time sleep started")
-    time.sleep(15)
-    print("Time sleep Ended")
-    print("QUEUE Ended")
+    # print("Time sleep started")
+    # time.sleep(15)
+    # print("Time sleep Ended")
+    # print("QUEUE Ended")
     otp=otpgen()
+    print(User.objects.get(id=9))
     u = User.objects.get(id=userid)
     sendEmailForVerification(otp,u.email)
     # if Otp.objects.filter(user=u):
@@ -60,7 +61,7 @@ def send_mail_task2(userid):
 def sendEmailForVerification(otp,receiver_email):
     
     # SENDER_EMAIL = settings.ADMIN_ID
-    SENDER_EMAIL = 'mfsi.mansic@gmail.com'
+    SENDER_EMAIL = str(settings.SENDER_EMAIL)
     print('SENDER_EMAIL',SENDER_EMAIL)
     RECEIVER_EMAIL = ['mansichauhan15@gmail.com']
     

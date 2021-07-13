@@ -8,7 +8,7 @@ from client.models import User
 # from devices.models import Device
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-
+from django.db.models import Q
 # Create your models here.
 
 
@@ -43,7 +43,18 @@ class Card(models.Model):
 
     class Meta:
         db_table = "cards"
+        verbose_name = "Cards"
         managed  = True
+
+    def getOtherUsersCards(self,userid):
+        return list(Card.objects.filter(~Q(user=userid)).values())
+
+    def getUsersCards(self,userid):
+        return Card.objects.filter(user=userid)
+
+    def getCardById(self,cardid):
+        return Card.objects.get(id=cardid)
+
     
 class GiftCard(models.Model):
     gift_card_no = models.CharField(max_length=32)
@@ -81,7 +92,11 @@ class Transaction(models.Model):
 
     class Meta:
         db_table = "transactions"
+        verbose_name = "Transactions"
         managed = True
+
+    def getTransactionDetailsByCardId(self,card_id):
+        return list(Transaction.objects.filter(Q(to_card = card_id)|Q(from_card = card_id)).values('id','to_card__card_number','to_card__id','to_card__user_id','from_card__id','from_card__user_id','amount','user__email','from_card__card_number').all())
 
 class Task(models.Model):
     summary = models.CharField(max_length=32)

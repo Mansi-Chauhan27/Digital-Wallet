@@ -64,6 +64,23 @@ class User(AbstractUser):
 
     objects = UserManager()
 
+    class Meta:
+        db_table = "users"
+        verbose_name = "Users"
+
+    def getUserEmailById(self,userid):
+        return list(User.objects.filter(id=userid).values('email'))[0]['email']
+
+    def getUserById(self,userid):
+        return User.objects.get(id=userid)
+
+
+    def getAllCustomers(self):
+        return list(User.objects.filter(is_customer=True).values('id','first_name','last_name','email','is_active','carddetails__id'))
+
+    def getAllRetailers(self):
+        return list(User.objects.filter(is_customer=False,is_admin=False).values('id','first_name','last_name','email','is_active','carddetails__id'))
+
 
 class RegisterUserOtp(models.Model):
     
@@ -109,8 +126,12 @@ class Otp(models.Model):
     is_used = models.BooleanField(default=False)
 
     class Meta:
-        db_table = "otp"
+        db_table = "otps"
+        verbose_name = "Otps"
         managed  = True
+
+    def getOtpByUserId(self,userid):
+        return list(Otp.objects.filter(user_id=userid).order_by('-created_at').values())
 
 
 

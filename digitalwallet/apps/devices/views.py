@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 # from django.contrib.auth.models import User
 from .serializers import DeviceSerialzer, DeviceAPIKeySerialzer
 from rest_framework import generics, serializers
-from devices.models import Device, DeviceAPIKey
+from apps.devices.models import Device, DeviceAPIKey
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
 from client.decorators import admin_required, group_required
@@ -26,36 +26,44 @@ from rest_framework.permissions import IsAuthenticated
 from client.views import generateCardNumber
 from transaction.models import Card
 # from rest_framework_api_key.models import APIKey
+from braces.views import GroupRequiredMixin
+from django.db import transaction
 
 
 
 # to get/add/deactivate devices
-class DeviceDetails(APIView):
+class DeviceDetails(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     print('sdafdas')
+    #required
+    group_required = ["owner","admin"]
+    raise_exception = True
+    redirect_unauthenticated_users = False
 
-    @method_decorator(group_required('admin'))
+
+    # @method_decorator(group_required('admin'))
     def get(self,request):
         result={}
-        # userid= request.user.id
-        userid= 66
+        userid= request.user.id
+        # userid= 66
         queryset = Device.objects.all()
-        print(queryset,'uhiuhu')
-        print('queryset',Device.objects.filter(user_id=userid).values('name','active','id','api_keys__id'))
+        # print(queryset,'uhiuhu')
+        # print('queryset',Device.objects.filter(user_id=userid).values('name','active','id','api_keys__id'))
         serializer = DeviceSerialzer(queryset, many=True)
-        print(serializer.data)
+        # print(serializer.data)
         result['data'] = serializer.data
-        result['data'] = list(Device.objects.filter(user_id=userid).values('name','active','id','api_keys__id').all())
+        # result['data'] = list(Device.objects.filter(user_id=userid).values('name','active','id','api_keys__id').all())
+        result['data'] = Device.getDeviceByRetailer(self,userid)
         return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
 
     # Add a device
     # @method_decorator(group_required('admin'))
+    @transaction.atomic 
     def post(self,request):
         result={}
         # data will contain giftcard
         data=request.data['data']
-        print(request,'uhiuhu')
-        device_data  = {'name':data['device_name'],'is_active':False,'user':66}
+        device_data  = {'name':data['device_name'],'is_active':False,'user':request.user.id}
 
         device_serializer = DeviceSerialzer(data = device_data)
         print('serializer',device_serializer)
@@ -74,21 +82,22 @@ class DeviceDetails(APIView):
         return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
         # return Response({'msg': 'Success'},status=HTTP_200_OK)
 
-    @method_decorator(group_required('admin'))
+
+    # @method_decorator(group_required('admin'))
+    @transaction.atomic 
     def put(self, request, format=None):
         result={}
         print(request.data,'huijoijoi')
-        user_data = Device.objects.get(id=request.data['data']['id'])
+        # user_data = Device.objects.get(id=request.data['data']['id'])
+        user_data = Device.getDevicesById(self,deviceid=request.data['data']['id'])
         print(request.user,'uyiuyi')
         serializer = DeviceSerialzer(user_data, data={'active': False}, partial=True)
 
         if serializer.is_valid():
-            print('gygyg',serializer.validated_data)
             serializer.save()
-            print('sffafsa')
             result['msg']='Success'
-            print(serializer.data)
-            device_api_key = DeviceAPIKey.objects.filter(device_id=request.data['data']['id'])
+            # device_api_key = DeviceAPIKey.objects.filter(device_id=request.data['data']['id'])
+            device_api_key = DeviceAPIKey.getDeviceApiKeyById(self,deviceid=request.data['data']['id'])
             if device_api_key:
                 device_api_key.update(revoked=True)
             return Response({'data':result}, status = HTTP_200_OK) 
@@ -97,14 +106,19 @@ class DeviceDetails(APIView):
             return Response({'data':result}, status = HTTP_400_BAD_REQUEST) 
 
 # to generate device key
-class DeviceApiKeyDetails(APIView):
+class DeviceApiKeyDetails(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     print('sdafdas')
+    #required
+    group_required = ["owner","admin"]
+    raise_exception = True
+    redirect_unauthenticated_users = False
 
-    @method_decorator(group_required('admin'))
+
+    # @method_decorator(group_required('admin'))
     def get(self,request):
         result={}
-        queryset = DeviceAPIKey.objects.all()
+        queryset = DeviceAPIKey.getAllDeviceApiKey(self)
         serializer = DeviceAPIKeySerialzer(queryset, many=True)
         result['data'] = serializer.data
         return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
@@ -113,7 +127,8 @@ class DeviceApiKeyDetails(APIView):
 
 
     # to generate key
-    @method_decorator(group_required('owner'))
+    # @method_decorator(group_required('owner'))
+    @transaction.atomic 
     def post(self,request):
         result={}
         # data will contain giftcard
@@ -129,7 +144,9 @@ class DeviceApiKeyDetails(APIView):
             #     # print('balance',balance)
             #     result['data':trans]
 
-            api_key, key = DeviceAPIKey.objects.create_key(name="apikey",device=Device.objects.get(id=data['device_id']))
+            # api_key, key = DeviceAPIKey.objects.create_key(name="apikey",device=Device.objects.get(id=data['device_id']))
+            api_key, key = DeviceAPIKey.objects.create_key(name="apikey",device=Device.getDevicesById(self,deviceid=data['device_id']))
+
             print(api_key,'keyyy',key)
             result['data']=key
             if key:

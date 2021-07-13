@@ -27,6 +27,8 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY =  env('SECRET_KEY')
 
+SENDER_EMAIL =  env('SENDER_EMAIL')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -48,7 +50,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'transaction',
     'guardian',
-    'devices',
+    'apps.devices',
     "rest_framework_api_key",
 ]
 
