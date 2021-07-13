@@ -8,7 +8,7 @@ from django.conf import settings
 from django.db.models import Q
 # from client.views import generateCardNumber
 from common.helper.utils import generateCardNumber
-from client.models import Token
+from apps.client.models import Token
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

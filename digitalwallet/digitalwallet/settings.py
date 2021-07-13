@@ -46,9 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'client.apps.ClientConfig',
+    'apps.client.apps.ClientConfig',
     'corsheaders',
-    'transaction',
+    'apps.transaction',
     'guardian',
     'apps.devices',
     "rest_framework_api_key",
@@ -173,3 +173,23 @@ AUTHENTICATION_BACKENDS = (
 
 # SENDGRID KEY
 SENDGRID_KEY =  env('SENDGRID_KEY')
+
+# LOGGER
+LOGGING ={
+    'version': 1,
+    'handlers':{
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': './logs/debug.log',
+        },
+    },
+    'loggers':{
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+        },
+    },
+    
+    # 'formatters':{}
+}

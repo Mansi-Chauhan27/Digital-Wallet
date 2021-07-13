@@ -1,4 +1,4 @@
-from client.models import User
+from apps.client.models import User
 from django.contrib.auth import authenticate
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
@@ -15,7 +15,7 @@ from rest_framework import generics, serializers
 from .models import CardDetails, GiftCard, Task, TransactionDetails, Card, Transaction
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
-from client.decorators import admin_required, group_required
+from apps.client.decorators import admin_required, group_required
 from rest_framework.authtoken.models import Token
 from common.helper.utils import cardgen
 from rest_framework.permissions import IsAuthenticated

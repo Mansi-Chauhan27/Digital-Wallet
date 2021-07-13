@@ -17,15 +17,15 @@ from rest_framework import generics, serializers
 from .models import User, RegisterUserOtp, Otp
 from django.utils.decorators import method_decorator
 from django.contrib.auth.decorators import login_required
-from client.decorators import admin_required, group_required
+from apps.client.decorators import admin_required, group_required
 from rest_framework.authtoken.models import Token
-from transaction.models import CardDetails, Task, Card
+from apps.transaction.models import CardDetails, Task, Card
 from django.contrib.auth.models import Permission
 from guardian.shortcuts import assign_perm
 from rest_framework.permissions import IsAuthenticated
 from datetime import datetime,timedelta
 from django.utils import timezone
-from client.tasks import send_mail_task, send_mail_task2
+from apps.client.tasks import send_mail_task, send_mail_task2
 from common.helper.utils import cardgen
 from django.db.models import Q
 from braces.views import GroupRequiredMixin
@@ -297,7 +297,7 @@ class Owners(GroupRequiredMixin,APIView):
     # @method_decorator(group_required('admin'))
     def get(self, request, *args, **kwargs):
         print('sfs',request.user,request.user.is_admin)
-        print(timezone.now()<list(RegisterUserOtp.objects.filter(user_id=47).values('expiry'))[0]['expiry'])
+        # print(timezone.now()<list(RegisterUserOtp.objects.filter(user_id=47).values('expiry'))[0]['expiry'])
         # user_list = list(User.objects.filter(is_customer=False,is_admin=False).values('id','first_name','last_name','email','is_active','carddetails__id'))
         user_list = User.getAllRetailers(self)
         return Response({'msg': 'Success','data':user_list},status=HTTP_200_OK)

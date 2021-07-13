@@ -4,7 +4,7 @@ from rest_framework import serializers
 from .models import CardDetails, TransactionDetails, GiftCard, Transaction, Card
 from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
-from client.tasks import send_mail_task
+from apps.client.tasks import send_mail_task
 from rest_framework.authtoken.models import Token
 
 

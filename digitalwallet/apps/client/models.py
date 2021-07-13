@@ -79,9 +79,9 @@ class User(AbstractUser):
         return list(User.objects.filter(is_customer=True).values('id','first_name','last_name','email','is_active','carddetails__id'))
 
     def getAllRetailers(self):
-        return list(User.objects.filter(is_customer=False,is_admin=False).values('id','first_name','last_name','email','is_active','carddetails__id'))
+        return list(User.objects.filter( ~Q(email='AnonymousUser'),is_customer=False,is_admin=False,is_superuser=False).values('id','first_name','last_name','email','is_active','carddetails__id'))
 
-
+# OLD
 class RegisterUserOtp(models.Model):
     
     # email = models.EmailField(
@@ -98,7 +98,7 @@ class RegisterUserOtp(models.Model):
     otp = models.IntegerField()
     expiry = models.DateTimeField(default=datetime.now()+timedelta(hours=2))
 
-
+# OLD
 class VerifyUserOtp(models.Model):
     
     # email = models.EmailField(

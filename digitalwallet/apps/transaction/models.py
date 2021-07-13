@@ -4,7 +4,7 @@ from rest_framework.authtoken.models import Token
 from django.dispatch import receiver
 from django.conf import settings
 from django.db.models.signals import post_save
-from client.models import User
+from apps.client.models import User
 # from devices.models import Device
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -13,7 +13,7 @@ from django.db.models import Q
 
 
 
-
+# OLD
 class CardDetails(models.Model):
     user = models.OneToOneField(
         User,
@@ -27,7 +27,32 @@ class CardDetails(models.Model):
     class Meta:
         managed = True
 
-  
+# OLD   
+class GiftCard(models.Model):
+    gift_card_no = models.CharField(max_length=32)
+    amount = models.IntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=False)
+    # user = models.ManyToManyField(User)
+
+    class Meta:
+        managed = True
+
+# OLD
+class TransactionDetails(models.Model):
+    balance = models.IntegerField()
+    credit_amount = models.IntegerField()
+    debit_amount = models.IntegerField()
+    updated_at = models.DateTimeField(auto_now_add=True)
+    is_topup = models.BooleanField(default=False)
+    card = models.ManyToManyField(CardDetails)
+    gift_card = models.ForeignKey(GiftCard, null=True, blank=True, on_delete=models.CASCADE,)
+    # device = models.ForeignKey(Device, null=True, blank=True, on_delete=models.CASCADE,)
+
+
+    class Meta:
+        managed = True
+
 
 class Card(models.Model):
     card_number = models.IntegerField(unique=True)
@@ -55,31 +80,6 @@ class Card(models.Model):
     def getCardById(self,cardid):
         return Card.objects.get(id=cardid)
 
-    
-class GiftCard(models.Model):
-    gift_card_no = models.CharField(max_length=32)
-    amount = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_active = models.BooleanField(default=False)
-    # user = models.ManyToManyField(User)
-
-    class Meta:
-        managed = True
-
-class TransactionDetails(models.Model):
-    balance = models.IntegerField()
-    credit_amount = models.IntegerField()
-    debit_amount = models.IntegerField()
-    updated_at = models.DateTimeField(auto_now_add=True)
-    is_topup = models.BooleanField(default=False)
-    card = models.ManyToManyField(CardDetails)
-    gift_card = models.ForeignKey(GiftCard, null=True, blank=True, on_delete=models.CASCADE,)
-    # device = models.ForeignKey(Device, null=True, blank=True, on_delete=models.CASCADE,)
-
-
-    class Meta:
-        managed = True
-
 
 class Transaction(models.Model):
     amount = models.IntegerField()
@@ -98,6 +98,9 @@ class Transaction(models.Model):
     def getTransactionDetailsByCardId(self,card_id):
         return list(Transaction.objects.filter(Q(to_card = card_id)|Q(from_card = card_id)).values('id','to_card__card_number','to_card__id','to_card__user_id','from_card__id','from_card__user_id','amount','user__email','from_card__card_number').all())
 
+
+
+# DJANGO GUARDIAN TEST
 class Task(models.Model):
     summary = models.CharField(max_length=32)
     content = models.TextField()
@@ -111,4 +114,3 @@ class Task(models.Model):
     
 
     
-

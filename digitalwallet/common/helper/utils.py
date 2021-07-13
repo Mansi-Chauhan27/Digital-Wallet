@@ -1,6 +1,6 @@
 import random as r
-from transaction.models import Card
-from client.models import User
+from apps.transaction.models import Card
+from apps.client.models import User
 
 
 def otpgen():
