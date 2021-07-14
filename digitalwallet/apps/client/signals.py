@@ -1,13 +1,10 @@
-# code
 from django.db.models.signals import post_save, pre_delete
 from django.core.signals import request_finished
-# from django.contrib.auth.models import User
 from django.dispatch import receiver
 from .models import User
 from django.conf import settings
 from django.db.models import Q
-# from client.views import generateCardNumber
-from common.helper.utils import generateCardNumber
+from apps.common.helper.utils import generateCardNumber
 from apps.client.models import Token
 
 
@@ -28,7 +25,4 @@ def generate_card(sender, instance=None, created=False, **kwargs):
             generateCardNumber(userid=user[0]['id'],balance=100000)
         elif(user[0]['is_customer']==True):
             generateCardNumber(userid=user[0]['id'],balance=0)
-        
-        # Token.objects.create(user=instance)
-
-    
+            

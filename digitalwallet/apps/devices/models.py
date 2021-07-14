@@ -28,14 +28,14 @@ class Device(models.Model):
         verbose_name = "Devices"
         managed  = True
 
-    def getDevices(self):
+    def get_devices(self):
         return list(Device.objects.filter(~Q(card=None),active=True).values('card__id','name','active'))
 
-    def getAllDevices(self):
-        return list(Device.objects.all().values('id','name','card__id'))
+    def get_all_devices(self):
+        return Device.objects.all()
 
-    def getDevicesById(self,deviceid):
-        return Device.objects.get(id=deviceid)
+    def get_device_by_id(self,device_id):
+        return Device.objects.get(id=device_id)
 
     def getDeviceByRetailer(self,userid):
         return list(Device.objects.filter(user_id=userid).values('name','active','id','api_keys__id').all())
@@ -53,8 +53,8 @@ class DeviceAPIKey(AbstractAPIKey):
         db_table = "devices_api_keys"
         managed  = True
 
-    def getDeviceApiKeyById(self,deviceid):
-        return DeviceAPIKey.objects.filter(device_id=deviceid)
+    def get_device_apikey(self,device_id):
+        return DeviceAPIKey.objects.filter(device_id=device_id, revoked=False).first()
 
     def getAllDeviceApiKey(self):
         return DeviceAPIKey.objects.all()

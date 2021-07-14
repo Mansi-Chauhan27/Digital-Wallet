@@ -1,3 +1,4 @@
+import re
 from django.contrib.auth import authenticate
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.authtoken.models import Token
@@ -12,7 +13,7 @@ from rest_framework.status import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth.models import Group
-from .serializers import RegisterSerializer, RegisterUserOtpSerialzer, UserSerialzer
+from .serializers import OtpSerialzer, RegisterSerializer, RegisterUserOtpSerialzer, UserSerialzer
 from rest_framework import generics, serializers
 from .models import User, RegisterUserOtp, Otp
 from django.utils.decorators import method_decorator
@@ -26,21 +27,15 @@ from rest_framework.permissions import IsAuthenticated
 from datetime import datetime,timedelta
 from django.utils import timezone
 from apps.client.tasks import send_mail_task, send_mail_task2
-from common.helper.utils import cardgen
+from apps.common.helper.utils import cardgen
 from django.db.models import Q
 from braces.views import GroupRequiredMixin
 from django.db import transaction
+from apps.common.helper.utils import otpgen
+from dateutil import parser
 
-
-# class RegisterView(generics.CreateAPIView):
-#     queryset = User.objects.all()
-#     print('queryset',queryset)
-#     permission_classes = (AllowAny,)
-#     serializer_class = RegisterSerializer
-
-#     print(serializer_class.data)
-    
-
+# Need to ask about group ... query to model
+# USER REGISTRATION
 class RegisterView(generics.GenericAPIView):
     queryset = User.objects.all()
     # print('queryset',queryset)
@@ -68,7 +63,6 @@ class RegisterView(generics.GenericAPIView):
             # generateCardNumber(self,user.id,balance=0)
         elif(request.data['is_owner']=='true'):
             my_group = Group.objects.get(name='owner') 
-            print(user,'sdasfsa',my_group)
             user_type='owner'
             my_group.user_set.add(user)
 
@@ -77,11 +71,6 @@ class RegisterView(generics.GenericAPIView):
         return Response({
             "token":Token.objects.get(user=user).key,'msg':'Success','is_admin':request.data['is_admin'], 'user_type':user_type
         })
-        # except Exception as e:
-        #     print(e)
-        #     return Response({
-        #         "msg":str(e)}, status=HTTP_400_BAD_REQUEST)
-    # print(serializer_class.data)
     
     
 
@@ -113,166 +102,73 @@ def login(request):
     #     return Response({'token': token.key,'email':user.email,'is_admin':user.is_admin},
     #                     status=HTTP_200_OK)
 
-# OLD
-@api_view(["POST"])
-@permission_classes((AllowAny,))
-@login_required
-def verifyotp(request):
-    # username = request.data.get("username")
-    otp = request.data.get("otp")
-    # password = request.data.get("password")
-    if otp is None:
-        return Response({'error': 'Please provide otp'},
-                        status=HTTP_400_BAD_REQUEST)
-    print(request.user)
-    print(request.user.id)
-    
-    print(list(RegisterUserOtp.objects.filter(user_id=request.user.id).values()))
-    user = list(RegisterUserOtp.objects.filter(user_id=request.user.id).values())
-    # qs_json = serializers.serialize('json', RegisterUserOtp.objects.filter(user_id=request.user.id).all())
-    
-    # print(qs_json)
-    if user:
-        print(type(user[0]['otp']))
-        print(type(otp))
-        print(timezone.now()<user[0]['expiry'])
-
-        if(user[0]['otp']==int(otp) and timezone.now()<user[0]['expiry']):
-            print('tyfyt')
-            User.objects.filter(id=request.user.id).update(is_verified=True)
-            RegisterUserOtp.objects.filter(user_id=request.user.id).delete()
-            return Response({'success': 'Verified','msg':'Success'},status=HTTP_200_OK)
-        else:
-            return Response({'error': 'Invalid Otp','msg':'Error'},status=HTTP_404_NOT_FOUND)
-    else:
-        return Response({'error': 'User Already Verified'},status=HTTP_404_NOT_FOUND)
-    #     return Response({'error': 'Invalid Credentials'},
-    #                     status=HTTP_404_NOT_FOUND)
-    # token, _ = Token.objects.get_or_create(user=user)
-    # return Response({'token': token.key,'email':user.email,'is_admin':user.is_admin},
-    #                 status=HTTP_200_OK)
-
-# OLD
-@csrf_exempt
-@api_view(["POST"])
-@permission_classes((AllowAny,))
-@login_required
-def generateOtp(request):
-    # username = request.data.get("username")
-    user_id = request.user.id
-    # password = request.data.get("password")
-    if user_id is None:
-        return Response({'error': 'Please provide otp'},
-                        status=HTTP_400_BAD_REQUEST)
-    
-    else:
-        send_mail_task.delay(user_id)
-        return Response({'msg': 'Otp Send Successfully'},status=HTTP_201_CREATED)
-    #     return Response({'error': 'Invalid Credentials'},
-    #                     status=HTTP_404_NOT_FOUND)
-    # token, _ = Token.objects.get_or_create(user=user)
-    # return Response({'token': token.key,'email':user.email,'is_admin':user.is_admin},
-    #                 status=HTTP_200_OK)
-
-
 
 #  FOR OTP GENERATION AND VERIFICATION
 class OtpView(APIView):
     permission_classes = (IsAuthenticated,)
     
-    # generate
+    # generate (S Done) add otp?
     def get(self,request):
-        print(request.data,'jiujuiju')
-        # action='verify'
-        # action = request.data['data']['action'] if "action" in request.data else ''
-        # print('action',action)
-        # action=request.data['data']['action']
 
         user_id = request.user.id
+        email_id = request.user.email
         if user_id is None:
             return Response({'error': 'Please provide otp'},
                             status=HTTP_400_BAD_REQUEST)
         
         else:
-            send_mail_task2.delay(user_id)
+            otp=otpgen()
+            send_mail_task2.delay(user_id,otp,email_id)
             return Response({'msg': 'Otp Send Successfully'},status=HTTP_201_CREATED)
     
-    # verify
+    # verify (S Done)
     
     def post(self,request):
-        print(request.data,'jiujuiju')
-        # action='verify'
-        # action = request.data['data']['action'] if "action" in request.data else ''
-        # print('action',action)
-        # action=request.data['data']['action']
         otp = request.data.get("otp")
-        # password = request.data.get("password")
         if otp is None:
             return Response({'error': 'Please provide otp'},
                             status=HTTP_400_BAD_REQUEST)
-        print(request.user)
-        print(request.user.id)
         
-        # print(list(Otp.objects.filter(user_id=request.user.id).values()))
-        # user = list(Otp.objects.filter(user_id=request.user.id).order_by('-created_at').values())
-        user = Otp.getOtpByUserId(self,userid=request.user.id)
-        # qs_json = serializers.serialize('json', RegisterUserOtp.objects.filter(user_id=request.user.id).all())
-        
-        # print(qs_json)
-        if user:
-            print('uiui',user)
-            print(type(user[0]['otp']))
-            print(type(otp))
-            print(timezone.now()<user[0]['created_at']+timedelta(hours=2))
+        o = Otp.get_latest_otp_of_user(self,request.user.id)
+        serializer = OtpSerialzer(o,many=False)
+        otp_data = serializer.data
+        if otp_data:
+            if(otp_data['otp']==int(otp) and timezone.now()<parser.parse(otp_data['created_at'])+timedelta(hours=2)):
+                user_data = User.getUserById(self,userid=request.user.id)
+                user_serializer = UserSerialzer(user_data, data={'is_verified': True}, partial=True)
 
-            if(user[0]['otp']==int(otp) and timezone.now()<user[0]['created_at']+timedelta(hours=2)):
-                print('tyfyt')
-                User.objects.filter(id=request.user.id).update(is_verified=True)
-                Otp.objects.filter(otp=int(otp)).update(is_used=True)
-                return Response({'success': 'Verified','msg':'Success'},status=HTTP_200_OK)
+                otp_data = Otp.get_otp_id(int(otp))
+                otp_serializer = OtpSerialzer(otp_data,data={'is_used': True}, partial=True)
+
+                if(user_serializer.is_valid() and otp_serializer.is_valid()):
+                    user_serializer.save()
+                    otp_serializer.save()
+                    return Response({'success': 'Verified','msg':'Success'},status=HTTP_200_OK)
+                else:
+                    return Response(status=HTTP_400_BAD_REQUEST)
             else:
                 return Response({'error': 'Invalid Otp','msg':'Error'},status=HTTP_400_BAD_REQUEST)
         else:
             return Response({'error': 'User Already Verified'},status=HTTP_404_NOT_FOUND)
         
-       
-# ACTIONS ON CUSTOMERS
+        
+# CUSTOMERS (S Done)
 class Customers(APIView):
     permission_classes = (IsAuthenticated,)
     
     # TO GET ALL THE CUSTOMERS
     @method_decorator(group_required('admin'))
     def get(self, request, *args, **kwargs):
-        print('sfs',request.user,request.user.is_admin)
-        # print(timezone.now()<list(RegisterUserOtp.objects.filter(user_id=47).values('expiry'))[0]['expiry'])
-        # user_list = list(User.objects.filter(is_customer=True).values('id','first_name','last_name','email','is_active','carddetails__id'))
-        user_list = User.getAllCustomers(self)
-        return Response({'msg': 'Success','data':user_list},status=HTTP_200_OK)
-
-    @method_decorator(group_required('admin'))
-    def delete(self, request, *args, **kwargs):
-        result={}
-        try:
-            print('sdsd',request.data)
-            u = User.objects.get(username = request.data['id'])
-            print(u)
-            u.delete()
-            result['msg'] = 'User Delete Successfully'
-
-        except User.DoesNotExist:
-            result['msg'] = "User doesnot exist"   
-            return Response({'msg': 'Success'},status=HTTP_404_NOT_FOUND)
-
-        except Exception as e: 
-            return Response({'msg': 'Something Went Wrong!'},status=HTTP_400_BAD_REQUEST)
- 
-        return Response({'msg': 'Success'},status=HTTP_200_OK)
+        u = User.get_all_customers(self)
+        serializer = UserSerialzer(u, many=True)
+        if serializer.data:
+            return Response({'msg': 'Success','data':serializer.data},status=HTTP_200_OK)
+        else:
+            return Response(status=HTTP_404_NOT_FOUND)
 
     # TO MAKE CUSTOMER INACTIVE
-    # @method_decorator(group_required('admin'))
     def put(self, request, format=None):
         result={}
-        # user_data = User.objects.get(id=request.data['data']['id'])
         user_data = User.getUserById(self,userid=request.data['data']['id'])
         serializer = UserSerialzer(user_data, data={'is_active': False}, partial=True)
 
@@ -285,7 +181,7 @@ class Customers(APIView):
             return Response({'data':result}, status = HTTP_400_BAD_REQUEST) 
 
 
-# Owners
+# OWNERS (S Done)
 class Owners(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     #required
@@ -294,39 +190,18 @@ class Owners(GroupRequiredMixin,APIView):
     redirect_unauthenticated_users = False
 
     # TO GET ALL THE RETAILERS
-    # @method_decorator(group_required('admin'))
     def get(self, request, *args, **kwargs):
-        print('sfs',request.user,request.user.is_admin)
-        # print(timezone.now()<list(RegisterUserOtp.objects.filter(user_id=47).values('expiry'))[0]['expiry'])
-        # user_list = list(User.objects.filter(is_customer=False,is_admin=False).values('id','first_name','last_name','email','is_active','carddetails__id'))
-        user_list = User.getAllRetailers(self)
-        return Response({'msg': 'Success','data':user_list},status=HTTP_200_OK)
-
-    # @method_decorator(group_required('admin'))
-    def delete(self, request, *args, **kwargs):
-        result={}
-        try:
-            print('sdsd',request.data)
-            u = User.objects.get(username = request.data['id'])
-            print(u)
-            u.delete()
-            result['msg'] = 'User Delete Successfully'
-
-        except User.DoesNotExist:
-            result['msg'] = "User doesnot exist"   
-            return Response({'msg': 'Success'},status=HTTP_404_NOT_FOUND)
-
-        except Exception as e: 
-            return Response({'msg': 'Something Went Wrong!'},status=HTTP_400_BAD_REQUEST)
- 
-        return Response({'msg': 'Success'},status=HTTP_200_OK)
+        u = User.get_all_retailers(self)
+        serializer = UserSerialzer(u, many=True)
+        if serializer.data:
+            return Response({'msg': 'Success','data':serializer.data},status=HTTP_200_OK)
+        else:
+            return Response(status=HTTP_404_NOT_FOUND)
 
     # TO MAKE RETAILER INACTIVE
-    # @method_decorator(group_required('admin'))
     @transaction.atomic 
     def put(self, request, format=None):
         result={}
-        # user_data = User.objects.get(id=request.data['data']['id'])
         user_data = User.getUserById(self,userid=request.data['data']['id'])
         serializer = UserSerialzer(user_data, data={'is_active': False}, partial=True)
 
@@ -342,7 +217,6 @@ class Owners(GroupRequiredMixin,APIView):
 
 
 def generateCardNumber(self,userid,balance):
-        print(userid)
         result={}
         card_no = cardgen()
         while  Card.objects.filter(card_number=int(card_no)) :

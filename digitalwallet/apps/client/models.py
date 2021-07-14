@@ -1,49 +1,12 @@
-# from digitalwallet.digitalwallet.settings import AUTH_USER_MODEL
 from django.db import models
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractUser
 from rest_framework.authtoken.models import Token
 from django.dispatch import receiver
 from django.conf import settings
 from django.db.models.signals import post_save
 from datetime import datetime, timedelta
 from django.db.models import Q
-# import client.views 
-# Create your models here.
-
-
-
-class UserManager(BaseUserManager):
-    """Define a model manager for User model with no username field."""
-
-    use_in_migrations = True
-
-    def _create_user(self, email, password, **extra_fields):
-        """Create and save a User with the given email and password."""
-        if not email:
-            raise ValueError('The given email must be set')
-        email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
-        user.set_password(password)
-        user.save(using=self._db)
-        return user
-
-    def create_user(self, email, password=None, **extra_fields):
-        """Create and save a regular User with the given email and password."""
-        extra_fields.setdefault('is_staff', False)
-        extra_fields.setdefault('is_superuser', False)
-        return self._create_user(email, password, **extra_fields)
-
-    def create_superuser(self, email, password, **extra_fields):
-        """Create and save a SuperUser with the given email and password."""
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('is_superuser', True)
-
-        if extra_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
-        if extra_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
-
-        return self._create_user(email, password, **extra_fields)
+from apps.client.managers import UserManager
 
 
 
@@ -68,28 +31,22 @@ class User(AbstractUser):
         db_table = "users"
         verbose_name = "Users"
 
-    def getUserEmailById(self,userid):
+    def get_user_email_by_id(self,userid):
         return list(User.objects.filter(id=userid).values('email'))[0]['email']
 
     def getUserById(self,userid):
         return User.objects.get(id=userid)
 
+    def get_all_users(self):
+        return User.objects.all()
 
-    def getAllCustomers(self):
-        return list(User.objects.filter(is_customer=True).values('id','first_name','last_name','email','is_active','carddetails__id'))
+    def get_all_customers(self):
+        return User.objects.filter(is_customer=True).all()
 
-    def getAllRetailers(self):
-        return list(User.objects.filter( ~Q(email='AnonymousUser'),is_customer=False,is_admin=False,is_superuser=False).values('id','first_name','last_name','email','is_active','carddetails__id'))
-
+    def get_all_retailers(self):
+        return User.objects.filter(~Q(email='AnonymousUser'),is_customer=False,is_admin=False,is_superuser=False).all()
 # OLD
 class RegisterUserOtp(models.Model):
-    
-    # email = models.EmailField(
-    #     verbose_name='email address',
-    #     max_length=255,
-    #     unique=True,
-    # )
-    # username = None
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -100,13 +57,6 @@ class RegisterUserOtp(models.Model):
 
 # OLD
 class VerifyUserOtp(models.Model):
-    
-    # email = models.EmailField(
-    #     verbose_name='email address',
-    #     max_length=255,
-    #     unique=True,
-    # )
-    # username = None
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -134,6 +84,9 @@ class Otp(models.Model):
         return list(Otp.objects.filter(user_id=userid).order_by('-created_at').values())
 
 
+    def get_latest_otp_of_user(self,user_id):
+        return Otp.objects.filter(user_id=user_id).order_by('-created_at').first()
 
-    
+    def get_otp_id(self,otp):
+        return Otp.objects.get(otp=otp)
 

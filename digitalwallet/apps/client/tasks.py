@@ -5,17 +5,12 @@ import time
 from apps.client.models import RegisterUserOtp, User, Otp
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-from common.helper.utils import otpgen
+from apps.common.helper.utils import otpgen
 from datetime import datetime, timedelta
 
 @shared_task
 def send_mail_task(userid):
-    print("*****"*10)
-    print("QUEUE Started")
-    print("Time sleep started")
     time.sleep(15)
-    print("Time sleep Ended")
-    print("QUEUE Ended")
     otp=otpgen()
     u = User.objects.get(id=userid)
     sendEmailForVerification(otp,u.email)
@@ -26,43 +21,18 @@ def send_mail_task(userid):
         user.save()
 
 @shared_task
-def send_mail_task2(userid):
-    print("*****"*10,userid)
-    print("QUEUE Started")
-    # print("Time sleep started")
-    # time.sleep(15)
-    # print("Time sleep Ended")
-    # print("QUEUE Ended")
-    otp=otpgen()
-    print(User.objects.get(id=9))
-    u = User.objects.get(id=userid)
-    sendEmailForVerification(otp,u.email)
-    # if Otp.objects.filter(user=u):
-    #     print('hereee')
-    #     Otp.objects.filter(user_id=userid).update(otp=otp,is_used=False,userid=userid)
-    # else:
-    #     print('herererereee')
+def send_mail_task2(userid,otp,email):
+    sendEmailForVerification(otp,email)
     user = Otp(user_id=userid,otp=otp,is_used=False)
     user.save()
 
 
 
-
-# import random as r
-# # function for otp generation
-# def otpgen():
-#     otp=""
-#     for i in range(4):
-#         otp+=str(r.randint(1,9))
-#     print ("Your One Time Password is ")
-#     print (otp)
-#     return otp
-
+# Send OTP EMAIL
 def sendEmailForVerification(otp,receiver_email):
     
     # SENDER_EMAIL = settings.ADMIN_ID
     SENDER_EMAIL = str(settings.SENDER_EMAIL)
-    print('SENDER_EMAIL',SENDER_EMAIL)
     RECEIVER_EMAIL = ['mansichauhan15@gmail.com']
     
     SUBJECT='Email Verification'
@@ -71,7 +41,6 @@ def sendEmailForVerification(otp,receiver_email):
     if(RECEIVER_EMAIL):
         try:
             for item in RECEIVER_EMAIL :
-                print(item)
                 HTML = """
                 <!DOCTYPE html>
                 <html>
@@ -94,11 +63,8 @@ def sendEmailForVerification(otp,receiver_email):
             
                 sg = SendGridAPIClient(settings.SENDGRID_KEY)
                 response = sg.send(message1)
-                print(response.status_code)
-                print(response.body)
-                print(response.headers)
             # return response
         except Exception as e:
-            print(e)
+            pass
             # data = {'error':'1'}
             # return data

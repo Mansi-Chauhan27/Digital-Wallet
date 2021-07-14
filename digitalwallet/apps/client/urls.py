@@ -8,6 +8,6 @@ urlpatterns = [
     # path('otp/', views.otpgen, name='otp'),
     path('verifyotp/', views.OtpView.as_view(), name='verifyotp'),
     path('customers/', views.Customers.as_view(), name='customers'),
-    path('generateotp/', views.generateOtp, name='generateotp'),
+    # path('generateotp/', views.generateOtp, name='generateotp'),
     path('owners/', views.Owners.as_view(), name='owners'),
 ]

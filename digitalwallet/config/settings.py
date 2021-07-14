@@ -66,7 +66,7 @@ MIDDLEWARE = [
     
 ]
 
-ROOT_URLCONF = 'digitalwallet.urls'
+ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
@@ -84,7 +84,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'digitalwallet.wsgi.application'
+WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # Database
