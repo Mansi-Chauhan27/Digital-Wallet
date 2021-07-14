@@ -10,7 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
+
 import os
+
+import environ
+env = environ.Env()
+environ.Env.read_env()
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,7 +25,9 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'pqy7oe75tku9zm1kepkax+52v%v_!a0r_g(z$281-zht_lf*hd'
+SECRET_KEY =  env('SECRET_KEY')
+
+SENDER_EMAIL =  env('SENDER_EMAIL')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -39,8 +46,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'client',
+    'apps.client.apps.ClientConfig',
     'corsheaders',
+    'apps.transaction',
+    'guardian',
+    'apps.devices',
+    "rest_framework_api_key",
 ]
 
 MIDDLEWARE = [
@@ -52,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    
 ]
 
 ROOT_URLCONF = 'digitalwallet.urls'
@@ -131,7 +143,9 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated', )
+        'rest_framework.permissions.IsAuthenticated', 
+        # "rest_framework_api_key.permissions.HasAPIKey",
+        )
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
@@ -142,3 +156,40 @@ CORS_ORIGIN_WHITELIST = [
 ]
 
 CELERY_BROKER_URL = 'amqp://localhost'
+
+# LOGIN_REDIRECT_URL = '/client/login'
+
+# LOGIN_URL = '/client/login'
+LOGIN_REDIRECT_URL = '/api-token-auth/'
+
+LOGIN_URL = '/api-token-auth/'
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend', # this is default
+    'guardian.backends.ObjectPermissionBackend',
+)
+
+# GUARDIAN_GET_INIT_ANONYMOUS_USER = 'core.models.get_custom_anon_user'
+
+# SENDGRID KEY
+SENDGRID_KEY =  env('SENDGRID_KEY')
+
+# LOGGER
+LOGGING ={
+    'version': 1,
+    'handlers':{
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': './logs/debug.log',
+        },
+    },
+    'loggers':{
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+        },
+    },
+    
+    # 'formatters':{}
+}
