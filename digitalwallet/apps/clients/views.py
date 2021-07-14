@@ -1,44 +1,39 @@
 import re
+from datetime import datetime, timedelta
+
+from braces.views import GroupRequiredMixin
+from dateutil import parser
 from django.contrib.auth import authenticate
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Group, Permission
+from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
+from guardian.shortcuts import assign_perm
+from rest_framework import generics
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.status import (
-    HTTP_201_CREATED,
-    HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
-    HTTP_200_OK
-)
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
+                                   HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND)
 from rest_framework.views import APIView
-from django.contrib.auth.models import Group
-from .serializers import OtpSerialzer, RegisterSerializer, RegisterUserOtpSerialzer, UserSerialzer
-from rest_framework import generics, serializers
-from .models import User, RegisterUserOtp, Otp
-from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
-from apps.client.decorators import admin_required, group_required
-from rest_framework.authtoken.models import Token
-from apps.transaction.models import CardDetails, Task, Card
-from django.contrib.auth.models import Permission
-from guardian.shortcuts import assign_perm
-from rest_framework.permissions import IsAuthenticated
-from datetime import datetime,timedelta
-from django.utils import timezone
-from apps.client.tasks import send_mail_task, send_mail_task2
+
+from apps.clients.decorators import group_required
+from apps.clients.tasks import send_mail_task2
 from apps.common.helper.utils import cardgen
-from django.db.models import Q
-from braces.views import GroupRequiredMixin
-from django.db import transaction
-from apps.common.helper.utils import otpgen
-from dateutil import parser
+from apps.transactions.models import Card
+
+from .models import Otp, User
+from .serializers import OtpSerialzer, RegisterSerializer, UserSerialzer
+
 
 # Need to ask about group ... query to model
 # USER REGISTRATION
 class RegisterView(generics.GenericAPIView):
     queryset = User.objects.all()
-    # print('queryset',queryset)
     permission_classes = (AllowAny,)
     serializer_class = RegisterSerializer
 
@@ -47,7 +42,6 @@ class RegisterView(generics.GenericAPIView):
     # try:
         serializer =  self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        # print('erfsdfsdf',serializer.validated_data)
         user=serializer.save()
         
         user_type=None
@@ -55,12 +49,10 @@ class RegisterView(generics.GenericAPIView):
             my_group = Group.objects.get(name='admin') 
             user_type='admin'
             my_group.user_set.add(user)
-            # generateCardNumber(self,user.id,balance=10000)
         elif(request.data['is_customer']=='true'):
             my_group = Group.objects.get(name='customer') 
             user_type='customer'
             my_group.user_set.add(user)
-            # generateCardNumber(self,user.id,balance=0)
         elif(request.data['is_owner']=='true'):
             my_group = Group.objects.get(name='owner') 
             user_type='owner'
@@ -117,7 +109,7 @@ class OtpView(APIView):
                             status=HTTP_400_BAD_REQUEST)
         
         else:
-            otp=otpgen()
+            otp=Otp.generate_otp(self)
             send_mail_task2.delay(user_id,otp,email_id)
             return Response({'msg': 'Otp Send Successfully'},status=HTTP_201_CREATED)
     

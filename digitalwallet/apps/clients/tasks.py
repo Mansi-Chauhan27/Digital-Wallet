@@ -2,7 +2,7 @@ from celery import shared_task
 from django.conf import settings
 import os
 import time
-from apps.client.models import RegisterUserOtp, User, Otp
+from apps.clients.models import RegisterUserOtp, User, Otp
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from apps.common.helper.utils import otpgen

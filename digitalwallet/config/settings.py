@@ -46,9 +46,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'apps.client.apps.ClientConfig',
+    'apps.clients.apps.ClientConfig',
     'corsheaders',
-    'apps.transaction',
+    'apps.transactions',
     'guardian',
     'apps.devices',
     "rest_framework_api_key",
@@ -136,7 +136,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-AUTH_USER_MODEL = 'client.User'
+AUTH_USER_MODEL = 'clients.User'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (

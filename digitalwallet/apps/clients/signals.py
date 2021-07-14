@@ -5,7 +5,7 @@ from .models import User
 from django.conf import settings
 from django.db.models import Q
 from apps.common.helper.utils import generateCardNumber
-from apps.client.models import Token
+from apps.clients.models import Token
 
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)

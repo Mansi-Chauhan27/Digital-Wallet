@@ -1,34 +1,18 @@
 
-from apps.client.models import User
-from django.contrib.auth import authenticate
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.status import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
-    HTTP_200_OK
-)
-from rest_framework.response import Response
-from rest_framework.views import APIView
-# from django.contrib.auth.models import User
-from .serializers import DeviceSerialzer, DeviceAPIKeySerialzer
-from rest_framework import generics, serializers
-from apps.devices.models import Device, DeviceAPIKey
-from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
-from apps.client.decorators import admin_required, group_required
-from rest_framework.authtoken.models import Token
-from django.contrib.auth.models import Permission
-from guardian.shortcuts import assign_perm
-from rest_framework.permissions import IsAuthenticated
-from apps.client.views import generateCardNumber
-from apps.transaction.models import Card
 # from rest_framework_api_key.models import APIKey
 from braces.views import GroupRequiredMixin
 from django.db import transaction
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST,
+                                   HTTP_404_NOT_FOUND)
+from rest_framework.views import APIView
 
+from apps.clients.views import generateCardNumber
+from apps.devices.models import Device, DeviceAPIKey
+
+# from django.contrib.auth.models import User
+from .serializers import DeviceAPIKeySerialzer, DeviceSerialzer
 
 
 # to get/add/deactivate devices   generate card no add?

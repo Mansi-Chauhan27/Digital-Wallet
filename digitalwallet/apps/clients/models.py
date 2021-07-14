@@ -1,13 +1,12 @@
-from django.db import models
-from django.contrib.auth.models import AbstractUser
-from rest_framework.authtoken.models import Token
-from django.dispatch import receiver
-from django.conf import settings
-from django.db.models.signals import post_save
+import random as r
 from datetime import datetime, timedelta
-from django.db.models import Q
-from apps.client.managers import UserManager
 
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.db.models import Q
+from rest_framework.authtoken.models import Token
+
+from apps.clients.managers import UserManager
 
 
 class User(AbstractUser):
@@ -89,4 +88,10 @@ class Otp(models.Model):
 
     def get_otp_id(self,otp):
         return Otp.objects.get(otp=otp)
+
+    def generate_otp(self):
+        otp=""
+        for i in range(4):
+            otp+=str(r.randint(1,9))
+        return otp
 

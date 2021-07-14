@@ -1,12 +1,12 @@
-from django.db.models import fields
-from rest_framework import serializers
-from .models import User, RegisterUserOtp, Otp
-from rest_framework.validators import UniqueValidator
 from django.contrib.auth.password_validation import validate_password
-from apps.client.tasks import send_mail_task, send_mail_task2
+from rest_framework import serializers
 from rest_framework.authtoken.models import Token
-from apps.common.helper.utils import otpgen
-from apps.transaction.serializers import CardSerializer
+from rest_framework.validators import UniqueValidator
+
+from apps.clients.tasks import send_mail_task, send_mail_task2
+from apps.transactions.serializers import CardSerializer
+
+from .models import Otp, RegisterUserOtp, User
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -51,18 +51,12 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         # generate Otp 
-        otp=otpgen()
+        otp=Otp.generate_otp(self)
         send_mail_task2.delay(user.id,otp,user.email)
         token=Token.objects.get(user=user).key
         # Insertion IN OTP Table
         return user
 
-
-
-class RegisterUserOtpSerialzer(serializers.ModelSerializer):
-    class Meta:
-        model = RegisterUserOtp
-        fields = '__all__'
 
 class OtpSerialzer(serializers.ModelSerializer):
     class Meta:

@@ -1,9 +1,9 @@
-from apps.client.models import User
-from apps.transaction.models import Card
 from django.db import models
 from django.db.models import Q
-
 from rest_framework_api_key.models import AbstractAPIKey
+
+from apps.clients.models import User
+from apps.transactions.models import Card
 
 
 class Device(models.Model):

@@ -1,15 +1,9 @@
-# from digitalwallet.digitalwallet.settings import AUTH_USER_MODEL
-from django.db import models
-from rest_framework.authtoken.models import Token
-from django.dispatch import receiver
 from django.conf import settings
-from django.db.models.signals import post_save
-from apps.client.models import User
-# from devices.models import Device
-from django.contrib.contenttypes.fields import GenericForeignKey
-from django.contrib.contenttypes.models import ContentType
+from django.db import models
 from django.db.models import Q
-# Create your models here.
+
+from apps.clients.models import User
+
 
 
 

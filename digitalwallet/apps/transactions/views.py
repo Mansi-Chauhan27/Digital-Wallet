@@ -1,36 +1,28 @@
-from apps.devices.serializers import DeviceSerialzer
-from apps.client.models import User
-from django.contrib.auth import authenticate
-from django.views.decorators.csrf import csrf_exempt
-from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.status import (
-    HTTP_400_BAD_REQUEST,
-    HTTP_404_NOT_FOUND,
-    HTTP_200_OK
-)
-from rest_framework.response import Response
-# from django.contrib.auth.models import User
-from rest_framework import generics, serializers
-from .models import CardDetails, GiftCard, Task, TransactionDetails, Card, Transaction
-from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import login_required
-from apps.client.decorators import admin_required, group_required
-from rest_framework.authtoken.models import Token
-from apps.common.helper.utils import cardgen
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from .serializers import CardDetailsSerialzer, TransactionDetailsSerialzer, GiftCardSerializer, CardSerializer, TransactionSerializer
-from apps.devices.permissions import HasDeviceAPIKey
-from django.db.models import Q
-from apps.devices.models import Device
-from django.db import transaction
 import json
 
-
-
 from braces.views import GroupRequiredMixin
+from django.db import transaction
+from django.utils.decorators import method_decorator
+# from django.contrib.auth.models import User
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST,
+                                   HTTP_404_NOT_FOUND)
+from rest_framework.views import APIView
+
+from apps.clients.decorators import group_required
+from apps.clients.models import User
+from apps.common.helper.utils import cardgen
+from apps.devices.models import Device
+from apps.devices.permissions import HasDeviceAPIKey
+from apps.devices.serializers import DeviceSerialzer
+
+from .models import (Card, CardDetails, GiftCard, Transaction,
+                     TransactionDetails)
+from .serializers import (CardDetailsSerialzer, CardSerializer,
+                          GiftCardSerializer, TransactionDetailsSerialzer,
+                          TransactionSerializer)
+
 
 # to get balnace and history of a user (S Done)
 class GetBalance(GroupRequiredMixin,APIView):
