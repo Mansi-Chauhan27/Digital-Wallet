@@ -53,15 +53,22 @@ class RegisterSerializer(serializers.ModelSerializer):
         # generate Otp 
         otp=Otp.generate_otp(self)
         send_mail_task2.delay(user.id,otp,user.email)
-        token=Token.objects.get(user=user).key
-        # Insertion IN OTP Table
+        otp_data  = {
+                        'user':user.id,
+                        'otp': otp,
+                        'is_used':False,
+                        }
+        otp_serializer = OtpSerialzer(data = otp_data)
+        otp_serializer.is_valid()
+        if otp_serializer.is_valid(raise_exception=True):
+            otp_serializer.save()
         return user
 
 
 class OtpSerialzer(serializers.ModelSerializer):
     class Meta:
         model = Otp
-        fields = ['id','user_id','otp','created_at','is_used']
+        fields = ['id','user','otp','created_at','is_used']
 
     def __init__(self, *args, **kwargs):
         kwargs['partial'] = True
@@ -75,10 +82,10 @@ class OtpSerialzer(serializers.ModelSerializer):
 
 
 class UserSerialzer(serializers.ModelSerializer):
-    cards = CardSerializer(many=True)
+    cards_detail = CardSerializer(many=True)
     class Meta:
         model = User
-        fields = ('first_name','last_name','email','is_active','cards','is_verified')
+        fields = ['id','first_name','last_name','email','is_active','cards_detail','is_verified','is_admin','is_customer']
 
     def __init__(self, *args, **kwargs):
         kwargs['partial'] = True

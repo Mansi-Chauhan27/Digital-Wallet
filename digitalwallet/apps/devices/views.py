@@ -8,8 +8,9 @@ from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST,
                                    HTTP_404_NOT_FOUND)
 from rest_framework.views import APIView
 
-from apps.clients.views import generateCardNumber
+# from apps.clients.views import generateCardNumber
 from apps.devices.models import Device, DeviceAPIKey
+from apps.transactions.models import Card
 
 # from django.contrib.auth.models import User
 from .serializers import DeviceAPIKeySerialzer, DeviceSerialzer
@@ -26,8 +27,8 @@ class DeviceDetails(GroupRequiredMixin,APIView):
     # To Get All The Devices
     def get(self,request):
         result={}
-        userid= request.user.id
-        queryset = Device.get_all_devices(self)
+        user_id= request.user.id
+        queryset = Device.get_all_devices_of_reatiler(self,user_id)
         serializer = DeviceSerialzer(queryset, many=True)
         result['data'] = serializer.data
         if serializer.data:
@@ -45,7 +46,7 @@ class DeviceDetails(GroupRequiredMixin,APIView):
         device_serializer = DeviceSerialzer(data = device_data)
         if device_serializer.is_valid(raise_exception=True):
             trans = device_serializer.save()
-            card_id = generateCardNumber(self,request.user.id,balance=0)
+            card_id = Card.generate_card_number(self,request.user.id,balance=0)
             device_data = Device.get_device_by_id(self,trans.id)
             serializer = DeviceSerialzer(device_data, data={'card': card_id}, partial=True)
 
@@ -62,7 +63,7 @@ class DeviceDetails(GroupRequiredMixin,APIView):
     @transaction.atomic 
     def put(self, request, format=None):
         result={}
-        device_data = Device.get_device_by_id(self,deviceid=request.data['data']['id'])
+        device_data = Device.get_device_by_id(self,request.data['data']['id'])
         serializer = DeviceSerialzer(device_data, data={'active': False}, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -75,7 +76,7 @@ class DeviceDetails(GroupRequiredMixin,APIView):
         else:
             return Response({'data':result}, status = HTTP_400_BAD_REQUEST) 
 
-# to generate device key (S Done)
+# to generate device key
 class DeviceApiKeyDetails(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     #required
@@ -86,7 +87,7 @@ class DeviceApiKeyDetails(GroupRequiredMixin,APIView):
 
     def get(self,request):
         result={}
-        queryset = DeviceAPIKey.getAllDeviceApiKey(self)
+        queryset = DeviceAPIKey.get_all_deviceapikey(self)
         serializer = DeviceAPIKeySerialzer(queryset, many=True)
         result['data'] = serializer.data
         return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
@@ -97,10 +98,10 @@ class DeviceApiKeyDetails(GroupRequiredMixin,APIView):
     def post(self,request):
         result={}
         data=request.data['data']
-        api_key, key = DeviceAPIKey.objects.create_key(name="apikey",device=Device.get_device_by_id(self,deviceid=data['device_id']))
+        api_key, key = DeviceAPIKey.objects.create_key(name="apikey",device=Device.get_device_by_id(self,data['device_id']))
         result['data']=key
         if key:
-            device_data = Device.get_device_by_id(self,deviceid=data['device_id'])
+            device_data = Device.get_device_by_id(self,data['device_id'])
             serializer = DeviceSerialzer(device_data, data={'active': True}, partial=True)
             if serializer.is_valid():
                 serializer.save()

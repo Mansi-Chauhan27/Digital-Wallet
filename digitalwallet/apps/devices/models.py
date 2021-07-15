@@ -31,15 +31,16 @@ class Device(models.Model):
     def get_devices(self):
         return list(Device.objects.filter(~Q(card=None),active=True).values('card__id','name','active'))
 
+    def get_all_devices_of_reatiler(self,user_id):
+        return Device.objects.filter(user_id=user_id)
+
     def get_all_devices(self):
         return Device.objects.all()
 
     def get_device_by_id(self,device_id):
         return Device.objects.get(id=device_id)
 
-    def getDeviceByRetailer(self,userid):
-        return list(Device.objects.filter(user_id=userid).values('name','active','id','api_keys__id').all())
-
+    
 class DeviceAPIKey(AbstractAPIKey):
     device = models.ForeignKey(
         Device,
@@ -56,7 +57,7 @@ class DeviceAPIKey(AbstractAPIKey):
     def get_device_apikey(self,device_id):
         return DeviceAPIKey.objects.filter(device_id=device_id, revoked=False).first()
 
-    def getAllDeviceApiKey(self):
+    def get_all_deviceapikey(self):
         return DeviceAPIKey.objects.all()
 
 # class DeviceAPIKeyManager(BaseAPIKeyManager):

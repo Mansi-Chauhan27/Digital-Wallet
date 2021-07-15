@@ -23,8 +23,8 @@ def send_mail_task(userid):
 @shared_task
 def send_mail_task2(userid,otp,email):
     sendEmailForVerification(otp,email)
-    user = Otp(user_id=userid,otp=otp,is_used=False)
-    user.save()
+    # user = Otp(user_id=userid,otp=otp,is_used=False)
+    # user.save()
 
 
 

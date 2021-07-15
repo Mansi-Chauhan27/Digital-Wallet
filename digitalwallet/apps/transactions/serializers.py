@@ -27,7 +27,7 @@ class GiftCardSerializer(serializers.ModelSerializer):
 class CardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Card
-        fields = ('id','card_number','balance','created_at','is_active','user','cards')
+        fields = ('id','card_number','balance','created_at','is_active','user',)
 
 
 class TransactionSerializer(serializers.ModelSerializer):
