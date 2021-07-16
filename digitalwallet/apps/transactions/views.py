@@ -2,18 +2,19 @@ import json
 
 from braces.views import GroupRequiredMixin
 from django.db import transaction
+from django.db.models import manager
 from django.utils.decorators import method_decorator
 # from django.contrib.auth.models import User
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST,
-                                   HTTP_404_NOT_FOUND)
+                                   HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED)
 from rest_framework.views import APIView
 
 from apps.clients.decorators import group_required
 from apps.clients.models import User
 from apps.common.helper.utils import cardgen
-from apps.devices.models import Device
+from apps.devices.models import Device, DeviceAPIKey
 from apps.devices.permissions import HasDeviceAPIKey
 from apps.devices.serializers import DeviceSerialzer
 
@@ -24,7 +25,9 @@ from .serializers import (CardDetailsSerialzer, CardSerializer,
                           TransactionSerializer)
 
 
-# to get balnace and history of a user
+'''
+    To Get Customer Cards balance and history of all the transactions made
+'''
 class GetBalance(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     #required
@@ -33,12 +36,13 @@ class GetBalance(GroupRequiredMixin,APIView):
     redirect_unauthenticated_users = False
 
 
-    # to Get BAlance
+    
     @transaction.atomic
     def post(self,request):
         result={}
         action=request.data['data']['action']
-
+        
+        # to Get BAlance or To Get History of all transactions made
         if(action=='get_balance'):
             userid=request.user.id
             queryset = Card.get_users_cards(self,userid)
@@ -83,7 +87,9 @@ class GetBalance(GroupRequiredMixin,APIView):
                 return Response({},status=HTTP_404_NOT_FOUND)
         
 
-# to transfer money
+'''
+    To Transfer Money From one Card to another
+'''
 class TransferMoney(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     group_required = ["customer","admin","owner"]
@@ -96,8 +102,17 @@ class TransferMoney(GroupRequiredMixin,APIView):
     def post(self,request):
         result={}
         data=request.data['data']
-        action = "to_customer"
-        if action == "to_customer":
+        action = data['action']
+        verified = False
+        # To check whether user is verified to make transactions
+        if(action=="from_customer"):
+            if(request.user.is_verified==True):
+                verified = True
+        elif(action=="from_device"):
+            device_api_key  = DeviceAPIKey.get_device_apikey(self,data['device_id'])
+            if(device_api_key):
+                verified = True
+        if verified:
             from_card_id = data['from_card_id']
             to_card_id = data['to_card_id']
             amount_to_be_transferred = int(data['amount_to_be_transferred'])
@@ -142,7 +157,12 @@ class TransferMoney(GroupRequiredMixin,APIView):
 
                 return Response({'data':result},status=HTTP_200_OK)
         
-# to get cards
+        else:
+            return Response({'msg':'Not Verified To MAke Transactions'},status=HTTP_405_METHOD_NOT_ALLOWED)
+
+'''
+    To get Cards with respect to User/Other users Cards/ Other users Cards Includinf all devices Cards
+'''
 class GetCards(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     group_required = ["customer","admin","owner"]
@@ -156,6 +176,7 @@ class GetCards(GroupRequiredMixin,APIView):
         data=request.data['data']
         user_id=request.user.id
         action = data['action']
+
         # to get cards for logged in user
         if action == "get_users_cards":
             result={}
@@ -173,6 +194,7 @@ class GetCards(GroupRequiredMixin,APIView):
             result['data'] = serializer.data
             return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
 
+        # to get cards of other users/devices(other than loggen in user)
         if action == "get_other_users_cards":
             result={}
             devices_queryset  =  Device.get_devices(self)
@@ -183,6 +205,7 @@ class GetCards(GroupRequiredMixin,APIView):
             result['customers'] = serializer.data
             return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
 
+        # to get cards of only users and not devices for refund transaction
         if action == "get_users_cards_for_refund":
             result={}
             devices_queryset  =  Device.get_all_devices(self)
@@ -200,7 +223,7 @@ class GetCards(GroupRequiredMixin,APIView):
 ########################################################################################################
 
 
-# to make transacion via devices using key (TODO)
+# to make transacion via devices using key (TODO), I dont hink it is required now or maybe in future integrations
 
 class Transaction1(APIView):
     permission_classes = (HasDeviceAPIKey)

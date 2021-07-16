@@ -5,7 +5,7 @@ from django.db import transaction
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST,
-                                   HTTP_404_NOT_FOUND)
+                                   HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED)
 from rest_framework.views import APIView
 
 # from apps.clients.views import generateCardNumber
@@ -16,7 +16,9 @@ from apps.transactions.models import Card
 from .serializers import DeviceAPIKeySerialzer, DeviceSerialzer
 
 
-# to get/add/deactivate devices   generate card no add?
+'''
+    to get/add/deactivate devices
+'''
 class DeviceDetails(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     #required
@@ -41,23 +43,25 @@ class DeviceDetails(GroupRequiredMixin,APIView):
     def post(self,request):
         result={}
         data=request.data['data']
-        device_data  = {'name':data['device_name'],'active':False,'user':request.user.id}
+        if(request.user.is_verified == True):
+            device_data  = {'name':data['device_name'],'active':False,'user':request.user.id}
+            device_serializer = DeviceSerialzer(data = device_data)
+            if device_serializer.is_valid(raise_exception=True):
+                trans = device_serializer.save()
+                card_id = Card.generate_card_number(self,request.user.id,balance=0)
+                device_data = Device.get_device_by_id(self,trans.id)
+                serializer = DeviceSerialzer(device_data, data={'card': card_id}, partial=True)
 
-        device_serializer = DeviceSerialzer(data = device_data)
-        if device_serializer.is_valid(raise_exception=True):
-            trans = device_serializer.save()
-            card_id = Card.generate_card_number(self,request.user.id,balance=0)
-            device_data = Device.get_device_by_id(self,trans.id)
-            serializer = DeviceSerialzer(device_data, data={'card': card_id}, partial=True)
-
-            if serializer.is_valid():
-                serializer.save()
-                return Response({},status = HTTP_200_OK) 
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response({},status = HTTP_200_OK) 
+                else:
+                    return Response({},status = HTTP_400_BAD_REQUEST) 
+        
             else:
-                return Response({},status = HTTP_400_BAD_REQUEST) 
-      
+                return Response(status=HTTP_400_BAD_REQUEST)
         else:
-            return Response(status=HTTP_400_BAD_REQUEST)
+            return Response({},status=HTTP_405_METHOD_NOT_ALLOWED)
 
     # To Deactivate the Device
     @transaction.atomic 
@@ -76,7 +80,9 @@ class DeviceDetails(GroupRequiredMixin,APIView):
         else:
             return Response({'data':result}, status = HTTP_400_BAD_REQUEST) 
 
-# to generate device key
+'''
+    to generate device key
+'''
 class DeviceApiKeyDetails(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     #required

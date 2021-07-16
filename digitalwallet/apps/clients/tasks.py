@@ -23,12 +23,14 @@ def send_mail_task(userid):
 @shared_task
 def send_mail_task2(userid,otp,email):
     sendEmailForVerification(otp,email)
-    # user = Otp(user_id=userid,otp=otp,is_used=False)
-    # user.save()
 
 
 
-# Send OTP EMAIL
+
+'''
+    Send OTP EMAIL
+
+'''
 def sendEmailForVerification(otp,receiver_email):
     
     # SENDER_EMAIL = settings.ADMIN_ID

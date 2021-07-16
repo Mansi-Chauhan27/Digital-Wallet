@@ -31,8 +31,10 @@ from .models import Otp, User
 from .serializers import OtpSerialzer, RegisterSerializer, UserSerialzer
 
 
-# Need to ask about group ... query to model
-# USER REGISTRATION
+'''
+    USER REGISTRATION
+
+'''
 class RegisterView(generics.GenericAPIView):
     queryset = User.objects.all()
     permission_classes = (AllowAny,)
@@ -52,7 +54,7 @@ class RegisterView(generics.GenericAPIView):
             my_group.user_set.add(user)
         
         return Response({
-            "token":Token.objects.get(user=user).key,'msg':'Success','is_admin':request.data['is_admin'], 'user_type':user_type
+            "token":Token.objects.get(user=user).key,'msg':'Success','is_admin':request.data['is_admin'], 'user_type':user_type,'user_id':user.id
         },status=HTTP_201_CREATED)
     
     
@@ -79,14 +81,17 @@ def login(request):
             user_type='admin'
         else:
             user_type='customer'
-        return Response({'token': token.key,'email':user.email,'is_admin':user.is_admin, 'user_type':user_type },
+        return Response({'token': token.key,'email':user.email,'is_admin':user.is_admin, 'user_type':user_type, 'user_id':user.id },
                         status=HTTP_200_OK)
     # else:
     #     return Response({'token': token.key,'email':user.email,'is_admin':user.is_admin},
     #                     status=HTTP_200_OK)
 
 
-#  FOR OTP GENERATION AND VERIFICATION
+'''
+    FOR OTP GENERATION AND VERIFICATION
+
+'''
 class OtpView(APIView):
     permission_classes = (IsAuthenticated,)
     
@@ -146,7 +151,10 @@ class OtpView(APIView):
             return Response({'error': 'User Already Verified'},status=HTTP_404_NOT_FOUND)
         
         
-# CUSTOMERS
+'''
+    CUSTOMERS
+
+'''
 class Customers(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     #required
@@ -178,7 +186,10 @@ class Customers(GroupRequiredMixin,APIView):
             return Response({'data':result}, status = HTTP_400_BAD_REQUEST) 
 
 
-# OWNERS
+'''
+    OWNERS/RETAILERS
+
+'''
 class Owners(GroupRequiredMixin,APIView):
     permission_classes = (IsAuthenticated,)
     #required

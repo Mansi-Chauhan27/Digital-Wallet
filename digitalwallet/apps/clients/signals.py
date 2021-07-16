@@ -16,7 +16,10 @@ def create_auth_token(sender, instance=None, created=False, **kwargs):
         Token.objects.create(user=instance)
 
 
-# to generate card number as customer/admin signs up
+'''
+    to generate card number as customer/admin signs up
+    
+'''
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 def generate_card(sender, instance=None, created=False, **kwargs):
