@@ -1,9 +1,9 @@
-from apps.client.models import User
-from apps.transaction.models import Card
 from django.db import models
 from django.db.models import Q
-
 from rest_framework_api_key.models import AbstractAPIKey
+
+from apps.clients.models import User
+from apps.transactions.models import Card
 
 
 class Device(models.Model):
@@ -28,18 +28,19 @@ class Device(models.Model):
         verbose_name = "Devices"
         managed  = True
 
-    def getDevices(self):
+    def get_devices(self):
         return list(Device.objects.filter(~Q(card=None),active=True).values('card__id','name','active'))
 
-    def getAllDevices(self):
-        return list(Device.objects.all().values('id','name','card__id'))
+    def get_all_devices_of_reatiler(self,user_id):
+        return Device.objects.filter(user_id=user_id)
 
-    def getDevicesById(self,deviceid):
-        return Device.objects.get(id=deviceid)
+    def get_all_devices(self):
+        return Device.objects.all()
 
-    def getDeviceByRetailer(self,userid):
-        return list(Device.objects.filter(user_id=userid).values('name','active','id','api_keys__id').all())
+    def get_device_by_id(self,device_id):
+        return Device.objects.get(id=device_id)
 
+    
 class DeviceAPIKey(AbstractAPIKey):
     device = models.ForeignKey(
         Device,
@@ -53,10 +54,10 @@ class DeviceAPIKey(AbstractAPIKey):
         db_table = "devices_api_keys"
         managed  = True
 
-    def getDeviceApiKeyById(self,deviceid):
-        return DeviceAPIKey.objects.filter(device_id=deviceid)
+    def get_device_apikey(self,device_id):
+        return DeviceAPIKey.objects.filter(device_id=device_id, revoked=False).first()
 
-    def getAllDeviceApiKey(self):
+    def get_all_deviceapikey(self):
         return DeviceAPIKey.objects.all()
 
 # class DeviceAPIKeyManager(BaseAPIKeyManager):
