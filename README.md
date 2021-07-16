@@ -21,10 +21,6 @@ A user can signup as Admin/customer/Retailer
 
 ## Getting Started
 
-### Dependencies
-
-* Describe any prerequisites, libraries, OS version, etc., needed before installing program.
-* ex. Windows 10
 
 ### Installing
 Inside requirements folder:
@@ -37,5 +33,5 @@ Inside digitalwallet folder:
 To load initial data:
 python manage.py loaddata fixtures/sample_data.json
 To Run Server:
-python manage.py tunserver
+python manage.py runserver
 
