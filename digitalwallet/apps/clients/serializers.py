@@ -1,4 +1,5 @@
 from django.contrib.auth.password_validation import validate_password
+from django.conf import settings
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 from rest_framework.validators import UniqueValidator
@@ -52,7 +53,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
         # generate Otp 
         otp=Otp.generate_otp(self)
-        send_mail_task2.delay(user.id,otp,user.email)
+        send_mail_task2.delay(user.id,otp,user.email,settings.SENDER_EMAIL,settings.SENDGRID_KEY)
         otp_data  = {
                         'user':user.id,
                         'otp': otp,

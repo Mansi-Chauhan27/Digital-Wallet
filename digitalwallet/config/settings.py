@@ -35,6 +35,7 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -71,7 +72,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': ['templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -173,6 +174,7 @@ AUTHENTICATION_BACKENDS = (
 
 # SENDGRID KEY
 SENDGRID_KEY =  env('SENDGRID_KEY')
+
 
 # LOGGER
 LOGGING ={

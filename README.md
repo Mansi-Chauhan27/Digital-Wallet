@@ -23,15 +23,26 @@ A user can signup as Admin/customer/Retailer
 
 
 ### Installing
+git clone https://github.com/Mansi-Chauhan27/Digital-Wallet.git
+
 Inside requirements folder:
 pip install -r base.txt
+
+Set Up .env File inside config folder with keys:
+SECRET_KEY=
+SENDGRID_KEY=
+SENDER_EMAIL=
+
+Create logs folder at the root level
 
 ### Executing program
 
 Inside digitalwallet folder:
 
-To load initial data:
-python manage.py loaddata fixtures/sample_data.json
-To Run Server:
-python manage.py runserver
+1. python manage.py runserver
+2. python manage.py migrate
+3. (if error in previos step)python manage.py migrate --run-syncdb
+4. python manage.py migrate
+<!-- TO LOAD Data -->
+5. python manage.py loaddata fixtures/sample_data.json   
 
