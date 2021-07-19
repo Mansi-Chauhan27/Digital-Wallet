@@ -19,19 +19,19 @@ class TransactionTestCase(APITestCase):
     def setUp(self):
         call_command('loaddata', 'fixtures/sample_data.json', verbosity=0)
                 
-        admin = {'first_name': 'test', 'last_name': 'user', 'email': 'admin@gmail.com',
-                'is_customer':False, 'is_admin':True,'password':'admin@123','password2':'admin@123','is_owner':False}
-        self.client.post('/client/register/',admin)
+        # admin = {'first_name': 'test', 'last_name': 'user', 'email': 'admin@gmail.com',
+        #         'is_customer':False, 'is_admin':True,'password':'admin@123','password2':'admin@123','is_owner':False}
+        # self.client.post('/client/register/',admin)
 
         customer = {'first_name': 'test', 'last_name': 'user', 'email': 'customer@gmail.com',
                 'is_customer':True, 'is_admin':False,'password':'admin@123','password2':'admin@123','is_owner':False}
         self.client.post('/client/register/',customer)
 
         User.objects.filter(email='customer@gmail.com').update(is_verified=True)
-        User.objects.filter(email='admin@gmail.com').update(is_verified=True)
+        # User.objects.filter(email='admin@gmail.com').update(is_verified=True)
        
         self.customer = User.objects.get(email='customer@gmail.com')
-        self.admin = User.objects.get(email='admin@gmail.com')
+        self.admin = User.objects.get(email='dan@gmail.com')
         self.token = Token.objects.get(user=self.admin).key
         self.api_authentication()
     

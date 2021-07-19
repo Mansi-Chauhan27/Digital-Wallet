@@ -24,7 +24,7 @@ class RegistrationtestCase(APITestCase):
                 'is_customer':True, 'is_admin':False,'password':'admin@123','password2':'admin@123','is_owner':False}
         response  = self.client.post('/client/register/',data)
         self.assertEqual(response.status_code,status.HTTP_201_CREATED)
-        self.assertEqual(Card.objects.count(),1)
+        self.assertEqual(Card.objects.count(),2)
 
 class LoginTestCase(APITestCase):
     def setUp(self):
@@ -51,9 +51,9 @@ class LoginTestCase(APITestCase):
 class AdminTestCase(APITestCase):
     def setUp(self):
         call_command('loaddata', 'fixtures/sample_data.json', verbosity=0)
-        admin = {'first_name': 'test', 'last_name': 'user', 'email': 'admin@gmail.com',
-                'is_customer':False, 'is_admin':True,'password':'admin@123','password2':'admin@123','is_owner':False}
-        response  = self.client.post('/client/register/',admin)
+        # admin = {'first_name': 'test', 'last_name': 'user', 'email': 'admin@gmail.com',
+        #         'is_customer':False, 'is_admin':True,'password':'admin@123','password2':'admin@123','is_owner':False}
+        # response  = self.client.post('/client/register/',admin)
         customer = {'first_name': 'test', 'last_name': 'user', 'email': 'test2@gmail.com',
                 'is_customer':True, 'is_admin':False,'password':'admin@123','password2':'admin@123','is_owner':False}
         self.client.post('/client/register/',customer)
@@ -62,7 +62,7 @@ class AdminTestCase(APITestCase):
                 'is_customer':False, 'is_admin':False,'password':'admin@123','password2':'admin@123','is_owner':True}
         self.client.post('/client/register/',owner)
         
-        self.admin  = User.objects.get(email='admin@gmail.com')
+        self.admin  = User.objects.get(email='dan@gmail.com')
         self.token = Token.objects.get(user=self.admin).key
         self.customer = User.objects.get(email='test2@gmail.com')
         self.owner = User.objects.get(email='owner@gmail.com')

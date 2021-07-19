@@ -23,6 +23,7 @@ class DeviceTestCase(APITestCase):
                 'is_customer':False, 'is_admin':False,'password':'admin@123','password2':'admin@123','is_owner':True}
         self.client.post('/client/register/',owner)
         
+        User.objects.filter(email='owner@gmail.com').update(is_verified=True)
         self.owner = User.objects.get(email='owner@gmail.com')
         self.token = Token.objects.get(user=self.owner).key
         self.api_authentication()
@@ -57,12 +58,10 @@ class DeviceTestCase(APITestCase):
         # self.assertEqual(User.objects.filter(is_active=False).count(),1)
 
     def test_generate_api_key(self):
-        print(self.owner)
         data = {
             'data': {'device_name': 'dominos'}
         }
         res=self.client.post('/devices/devices/',data, format='json')
-        print(self.owner.groups.all())
         data_id = {
             'data': { 'device_id': 1 }
         }
