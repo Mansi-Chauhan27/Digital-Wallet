@@ -1,17 +1,15 @@
-from django.contrib.auth.models import Group
-from apps.transactions.models import Card
 import json
 
 import rest_framework
-from apps.clients.models import User
+from django.contrib.auth.models import Group
+from django.core.management import call_command
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APITestCase
-from django.core.management import call_command
 
+from apps.clients.models import User
 from apps.clients.serializers import RegisterSerializer
-
-
+from apps.transactions.models import Card
 
 # Create your tests here.
 
@@ -45,7 +43,7 @@ class LoginTestCase(APITestCase):
         res=self.client.post('/client/login/',{'email':self.customer,'password':'admin@123'})
         self.assertEqual(res.status_code,status.HTTP_200_OK)
 
-    def test_login_incoorect_credentials(self):
+    def test_login_incorect_credentials(self):
         res=self.client.post('/client/login/',{'email':self.customer,'password':'admin@1234'})
         self.assertEqual(res.status_code,status.HTTP_404_NOT_FOUND)
 

@@ -94,7 +94,8 @@ def login(request):
 '''
 class OtpView(APIView):
     permission_classes = (IsAuthenticated,)
-    # generate (S Done) add otp?
+    
+    # generate
     def get(self,request):
 
         user_id = request.user.id
@@ -119,7 +120,7 @@ class OtpView(APIView):
             # user.save()
             return Response({'msg': 'Otp Send Successfully'},status=HTTP_201_CREATED)
     
-    # verify (S Done)
+    # verify
     
     def post(self,request):
         otp = request.data.get("otp")
