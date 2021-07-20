@@ -45,4 +45,7 @@ Inside digitalwallet folder:
 4. python manage.py migrate
 <!-- TO LOAD Data -->
 5. python manage.py loaddata fixtures/sample_data.json   
+<!-- Admin: dan@gmail.com password : admin@123 -->
+6. python manage.py runserver
+
 
