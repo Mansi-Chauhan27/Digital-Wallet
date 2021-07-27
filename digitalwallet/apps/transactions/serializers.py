@@ -17,6 +17,7 @@ class CardSerializer(serializers.ModelSerializer):
 class TransactionSerializer(serializers.ModelSerializer):
     from_card_detail = CardSerializer(source='from_card',read_only=True)
     to_card_detail = CardSerializer(source='to_card',read_only=True)
+    created_at = serializers.DateTimeField(format="%m/%d/%Y %H:%M:%S",read_only=True)
 
     class Meta:
         model = Transaction

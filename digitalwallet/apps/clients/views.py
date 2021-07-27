@@ -9,6 +9,7 @@ from django.contrib.auth.models import Group, Permission
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
+from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from guardian.shortcuts import assign_perm
@@ -19,7 +20,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import (HTTP_200_OK, HTTP_201_CREATED,
-                                   HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND)
+                                   HTTP_400_BAD_REQUEST, HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED)
 from rest_framework.views import APIView
 
 from apps.clients.decorators import group_required
@@ -29,7 +30,6 @@ from apps.transactions.models import Card
 
 from .models import Otp, User
 from .serializers import OtpSerialzer, RegisterSerializer, UserSerialzer
-
 
 '''
     USER REGISTRATION
@@ -95,7 +95,7 @@ def login(request):
 class OtpView(APIView):
     permission_classes = (IsAuthenticated,)
     
-    # generate (S Done) add otp?
+    # generate
     def get(self,request):
 
         user_id = request.user.id
@@ -106,7 +106,7 @@ class OtpView(APIView):
         
         else:
             otp=Otp.generate_otp(self)
-            send_mail_task2.delay(user_id,otp,email_id)
+            send_mail_task2.delay(user_id,otp,email_id,settings.SENDER_EMAIL,settings.SENDGRID_KEY)
             otp_data  = {
                         'user':user_id,
                         'otp': otp,
@@ -120,7 +120,7 @@ class OtpView(APIView):
             # user.save()
             return Response({'msg': 'Otp Send Successfully'},status=HTTP_201_CREATED)
     
-    # verify (S Done)
+    # verify
     
     def post(self,request):
         otp = request.data.get("otp")

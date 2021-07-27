@@ -10,6 +10,7 @@ from django.contrib.auth.models import Group
 from apps.clients.managers import UserManager
 
 
+
 class User(AbstractUser):
     
     email = models.EmailField(

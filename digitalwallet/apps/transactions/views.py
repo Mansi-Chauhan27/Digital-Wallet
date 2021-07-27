@@ -2,18 +2,14 @@ import json
 
 from braces.views import GroupRequiredMixin
 from django.db import transaction
-from django.db.models import manager
-from django.utils.decorators import method_decorator
-# from django.contrib.auth.models import User
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST,
-                                   HTTP_404_NOT_FOUND, HTTP_405_METHOD_NOT_ALLOWED)
+                                   HTTP_404_NOT_FOUND,
+                                   HTTP_405_METHOD_NOT_ALLOWED)
 from rest_framework.views import APIView
 
-from apps.clients.decorators import group_required
 from apps.clients.models import User
-from apps.common.helper.utils import cardgen
 from apps.devices.models import Device, DeviceAPIKey
 from apps.devices.permissions import HasDeviceAPIKey
 from apps.devices.serializers import DeviceSerialzer
@@ -21,9 +17,8 @@ from apps.devices.serializers import DeviceSerialzer
 from .models import (Card, CardDetails, GiftCard, Transaction,
                      TransactionDetails)
 from .serializers import (CardDetailsSerialzer, CardSerializer,
-                          GiftCardSerializer, TransactionDetailsSerialzer,
+                          TransactionDetailsSerialzer,
                           TransactionSerializer)
-
 
 '''
     To Get Customer Cards balance and history of all the transactions made

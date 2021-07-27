@@ -135,5 +135,27 @@
                 69
             ]
         }
+    },
+    {
+        "model": "clients.user",
+        "pk": 3,
+        "fields": {
+            "password": "pbkdf2_sha256$260000$t6iV0RfAxoUseiZK7Y2sNE$OqdV/JCbrcy5gu0TgpAgY2Uli3sZ905w+KdD6Ub5VuY=",
+            "last_login": null,
+            "is_superuser": false,
+            "first_name": "Danial",
+            "last_name": "James",
+            "is_staff": false,
+            "is_active": true,
+            "date_joined": "2021-07-15T06:10:03.767Z",
+            "email": "dan@gmail.com",
+            "is_customer": false,
+            "is_admin": true,
+            "is_verified": true,
+            "groups": [
+                1
+            ],
+            "user_permissions": []
+        }
     }
 ]
