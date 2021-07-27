@@ -147,6 +147,14 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_DIR = 'static'
+STATIC_ROOT_DIR = 'staticfiles'
+
+STATIC_ROOT = os.path.join(BASE_DIR, STATIC_ROOT_DIR)
+
+STATICFILES_DIRS = (
+    os.path.join(BASE_DIR, STATIC_DIR),
+)
 
 AUTH_USER_MODEL = 'clients.User'
 
