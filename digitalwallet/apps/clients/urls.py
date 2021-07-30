@@ -10,4 +10,5 @@ urlpatterns = [
     path('customers/', views.Customers.as_view(), name='customers'),
     # path('generateotp/', views.generateOtp, name='generateotp'),
     path('owners/', views.Owners.as_view(), name='owners'),
+    path('logout/', views.Logout.as_view(), name='logout'),
 ]

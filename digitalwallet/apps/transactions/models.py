@@ -23,7 +23,7 @@ class Card(models.Model):
 
     class Meta:
         db_table = "cards"
-        verbose_name = "Cards"
+        verbose_name = "Card"
         managed  = True
 
     def get_users_cards(self,userid):
@@ -67,7 +67,7 @@ class Transaction(models.Model):
 
     class Meta:
         db_table = "transactions"
-        verbose_name = "Transactions"
+        verbose_name = "Transaction"
         managed = True
 
 

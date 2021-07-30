@@ -2,6 +2,8 @@ import json
 
 from braces.views import GroupRequiredMixin
 from django.db import transaction
+from rest_framework import serializers
+from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import (HTTP_200_OK, HTTP_400_BAD_REQUEST,
@@ -19,6 +21,7 @@ from .models import (Card, CardDetails, GiftCard, Transaction,
 from .serializers import (CardDetailsSerialzer, CardSerializer,
                           TransactionDetailsSerialzer,
                           TransactionSerializer)
+from apps.clients.serializers import UserSerialzer
 
 '''
     To Get Customer Cards balance and history of all the transactions made
@@ -36,14 +39,17 @@ class GetBalance(GroupRequiredMixin,APIView):
     def post(self,request):
         result={}
         action=request.data['data']['action']
-        
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info('HEYYYYYYYYYYYY')
+        logging.warning(request.user,request.user.groups.filter(name='customer').exists())
         # to Get BAlance or To Get History of all transactions made
         if(action=='get_balance'):
             userid=request.user.id
             queryset = Card.get_users_cards(self,userid)
             serializer = CardSerializer(queryset, many=True)
             result['data'] = serializer.data
-            return Response({'data':result},status=HTTP_200_OK)
+            return Response({'data':result,'u':request.user.groups.filter(name='customer').exists()},status=HTTP_200_OK)
         else:
             data=request.data['data']
             card_id=data['card_id']
@@ -74,10 +80,10 @@ class GetBalance(GroupRequiredMixin,APIView):
                         fr = User.get_user_email_by_id(self,tr['from_card_detail']['user'])
                     status = 'Credit' if(tr['to_card_detail']['id']==card_id) else 'Debit'
                     source = to if(status=='Debit') else fr
-                    data.append({'id':tr['id'],'amount':tr['amount'],'debit_from':fr,'credit_to':to, 'to_card_id':tr['to_card_detail']['card_number'],'from_card_id':tr['from_card_detail']['card_number'],'status':status,'source':source})
+                    data.append({'id':tr['id'],'amount':tr['amount'],'debit_from':fr,'credit_to':to, 'to_card_id':tr['to_card_detail']['card_number'],'from_card_id':tr['from_card_detail']['card_number'],'status':status,'source':source,'created_at':tr['created_at']})
                 result['data'] =data
                 result['msg']='Success'
-                return Response({'data':result},status=HTTP_200_OK)
+                return Response({'data':result,'u':request.user.groups.filter(name='customer').exists()},status=HTTP_200_OK)
             else:
                 return Response({},status=HTTP_404_NOT_FOUND)
         
@@ -171,7 +177,7 @@ class GetCards(GroupRequiredMixin,APIView):
         data=request.data['data']
         user_id=request.user.id
         action = data['action']
-
+        
         # to get cards for logged in user
         if action == "get_users_cards":
             result={}
@@ -284,3 +290,77 @@ class Transaction1(APIView):
         return Response({'msg': 'Success','data':result},status=HTTP_200_OK)
         # return Response({'msg': 'Success'},status=HTTP_200_OK)
 
+##################################
+
+from django.http import HttpResponse
+from django.views.generic import View
+ 
+#importing get_template from loader
+from django.template.loader import get_template
+ 
+#import render_to_pdf from util.py 
+from apps.common.helper.utils import render_to_pdf 
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from django.conf import settings
+import email
+import email.mime.application
+ 
+ 
+#Creating our view, it is a class based view
+class GeneratePdf(View):
+    def get(self, request, *args, **kwargs):    
+        #getting the users
+        u = User.objects.filter(is_active=True,is_customer=True,is_verified=True)
+        serializer = UserSerialzer(u, many=True)
+        user_list = json.loads(json.dumps(serializer.data))
+        print(json.loads(json.dumps(serializer.data)))
+
+        #getting the template
+        # res = render_to_pdf('transaction.html','test.pdf',{'data':'mansi','keywords':[{'id':1},{'id':2}]})
+        # print(res)
+        # if(res):
+        for item in user_list:
+            generateReportAndSendMail('1234','mansi9@yopmail.com',settings.SENDER_EMAIL,settings.SENDER_PASS,item['email'])
+         #rendering the template
+        return HttpResponse('done')
+ 
+
+def generateReportAndSendMail(otp,receiver_email,sender_email,sender_pass,useremail):
+    filename_pdf = 'transaction.pdf'
+    res = render_to_pdf('transaction.html',filename_pdf,{'data':useremail,'keywords':[{'id':1},{'id':2}]})
+    print(res)
+    if(res):
+        template = get_template('t.html')
+        context = {'otp': str(otp)}
+        content = template.render(context)
+        mail_content = content
+        print(receiver_email,sender_email,sender_pass)
+        #The mail addresses and password
+        sender_address = sender_email
+        sender_password = sender_pass
+        receiver_address = receiver_email
+        #Setup the MIME
+        message = MIMEMultipart()
+        message['From'] = sender_address
+        message['To'] = receiver_address
+        message['Subject'] = 'A test mail sent by Python. It has an attachment.'   #The subject line
+        #The body and the attachments for the mail
+        message.attach(MIMEText(mail_content, 'plain'))
+        # Adding Pdf file attachment
+        filename='pdf/'+filename_pdf
+        fo=open(filename,'rb')
+        attach = email.mime.application.MIMEApplication(fo.read(),_subtype="ppt")
+        fo.close()
+        attach.add_header('Content-Disposition','attachment',filename=filename)
+
+        message.attach(attach)
+        #Create SMTP session for sending the mail
+        session = smtplib.SMTP('smtp.gmail.com', 587) #use gmail with port
+        session.starttls() #enable security
+        session.login(sender_address, sender_password) #login with mail_id and password
+        text = message.as_string()
+        session.sendmail(sender_address, receiver_address, text)
+        session.quit()
+            

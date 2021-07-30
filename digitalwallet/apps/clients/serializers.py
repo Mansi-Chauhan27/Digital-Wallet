@@ -53,7 +53,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         user.save()
         # generate Otp 
         otp=Otp.generate_otp(self)
-        send_mail_task2.delay(user.id,otp,user.email,settings.SENDER_EMAIL,settings.SENDGRID_KEY)
+        print(settings.SENDER_EMAIL)
+        send_mail_task2.delay(user.id,otp,user.email,settings.SENDER_EMAIL,settings.SENDER_PASS)
         otp_data  = {
                         'user':user.id,
                         'otp': otp,

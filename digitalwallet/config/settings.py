@@ -29,6 +29,8 @@ SECRET_KEY =  env('SECRET_KEY')
 
 SENDER_EMAIL =  env('SENDER_EMAIL')
 
+SENDER_PASS = env('SENDER_PASS')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -53,6 +55,8 @@ INSTALLED_APPS = [
     'guardian',
     'apps.devices',
     "rest_framework_api_key",
+    'django_celery_results',
+    'django_celery_beat'
 ]
 
 MIDDLEWARE = [
@@ -177,6 +181,19 @@ CORS_ORIGIN_WHITELIST = [
 
 CELERY_BROKER_URL = 'amqp://localhost'
 
+CELERY_ACCEPT_CONTENT = ['application/json']
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'Asia/Kolkata'
+
+CELERY_RESULT_BACKEND = 'django-db'
+
+# CELERY BEAT
+
+CELERY_BEAT_SCHEDULAR = 'django_celery_beat.schedulars:DatabaseScheduler'
+
+
+
 # LOGIN_REDIRECT_URL = '/client/login'
 
 # LOGIN_URL = '/client/login'
@@ -200,7 +217,7 @@ LOGGING ={
     'version': 1,
     'handlers':{
         'file': {
-            'level': 'DEBUG',
+            'level': 'INFO',
             'class': 'logging.FileHandler',
             'filename': './logs/debug.log',
         },
@@ -208,7 +225,12 @@ LOGGING ={
     'loggers':{
         'django': {
             'handlers': ['file'],
-            'level': 'DEBUG',
+            'level': 'INFO',
+        },
+        'apps.transactions': {
+            'handlers': ['file'],
+            'level': 'INFO',
+            'propagate': True,
         },
     },
     

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Django HTMLtoPDF Tutorial</title>
+</head>
+<body>
+    <h1>HTML To PDF</h1>
+     <b>I'm building web-based, data-driven apps using Django. <br>
+Eventually (or unfortunately), I will need to generate some reports that are printer-friendly. <b>
+Logically, PDF is the format for such files... <br>
+so how am I going to convert my xHTML and CSS to a nice-looking PDF document?<br>
+ 
+The Django Book has a whole chapter dedicated to Generating Non-HTML Content.<br> 
+They seem to to be fond of ReportLab ToolKit.<br>
+ The caveat here, though, is that you need to know a bit about the internals of a PDF document.<br> 
+If you're familiar with this, the ReportLab toolkit seems to be the way to go! It has many features, and it seems to be a powerful PDF-generating tool.
+</b>
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
+</head>
+<body>
+
+<h2>Transaction History</h2>
+
+<table>
+  <tr>
+    <th>Date Time</th>
+    <th>Status</th>
+    <th>Source</th>
+    <th>Amount</th>
+  </tr>
+  {% for tr in transaction %}
+  <tr>
+    <td>{{tr.created_at}}</td>
+    <td>{{tr.status}}</td>
+    <td>{{tr.source}}</td>
+    <td>{{tr.amount}}</td>
+  </tr>
+  {% endfor %}
+ 
+</table>
+
+</body>
+</html>
+
+{% for tr in transaction %}
+
+    {{ forloop.counter }} # 1 based
+    {{ forloop.counter0 }} # 0 based
+    <h1>
+    Name: {{ data }}
+    Id: {{tr.id}}
+    </h1>
+
+{% endfor %}
+
+</body>
+</html>
+ 

@@ -17,8 +17,9 @@ from django.template.loader import get_template
 
 
 @shared_task
-def send_mail_task2(userid,otp,email,sender_email,sendgrid_key):
-    sendEmailForVerification(otp,email,sender_email,sendgrid_key)
+def send_mail_task2(userid,otp,email,sender_email,sender_pass):
+    # sendEmailForVerification(otp,email,sender_email,sendgrid_key)
+    sendEmailForVerificationUsingGmail(otp,email,sender_email,sender_pass)
 
 
 
@@ -41,12 +42,44 @@ def sendEmailForVerification(otp,receiver_email,sender_email,sendgrid_key):
             template = get_template('t.html')
             context = {'otp': str(otp)}
             content = template.render(context)
+            print(content)
+            print('####'+sender_email, sendgrid_key)
             message1 = Mail(from_email=SENDER_EMAIL,to_emails=str(item),subject=SUBJECT,html_content=content)
-        
+            print('ssdss',message1)
             sg = SendGridAPIClient(sendgrid_key)
             res = sg.send(message1)
+            print(res.status_code, res.body, res.headers)
             
 
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+def sendEmailForVerificationUsingGmail(otp,receiver_email,sender_email,sender_pass):
+    template = get_template('t.html')
+    context = {'otp': str(otp)}
+    content = template.render(context)
+    mail_content = content
+    print(receiver_email,sender_email,sender_pass)
+    #The mail addresses and password
+    sender_address = sender_email
+    sender_password = sender_pass
+    receiver_address = receiver_email
+    #Setup the MIME
+    message = MIMEMultipart()
+    message['From'] = sender_address
+    message['To'] = receiver_address
+    message['Subject'] = 'A test mail sent by Python. It has an attachment.'   #The subject line
+    #The body and the attachments for the mail
+    message.attach(MIMEText(mail_content, 'plain'))
+    #Create SMTP session for sending the mail
+    session = smtplib.SMTP('smtp.gmail.com', 587) #use gmail with port
+    session.starttls() #enable security
+    session.login(sender_address, sender_password) #login with mail_id and password
+    text = message.as_string()
+    session.sendmail(sender_address, receiver_address, text)
+    session.quit()
+        
 
 @shared_task
 def send_mail_task(userid):
@@ -59,3 +92,8 @@ def send_mail_task(userid):
     else:
         user = RegisterUserOtp(user=u,otp=otp,expiry=datetime.now()+timedelta(hours=2))
         user.save()
+
+
+@shared_task
+def add():
+    print('helloo')

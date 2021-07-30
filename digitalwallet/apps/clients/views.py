@@ -54,7 +54,7 @@ class RegisterView(generics.GenericAPIView):
             my_group.user_set.add(user)
         
         return Response({
-            "token":Token.objects.get(user=user).key,'msg':'Success','is_admin':request.data['is_admin'], 'user_type':user_type,'user_id':user.id
+            "token":Token.objects.get(user=user).key,'msg':'Success','is_admin':request.data['is_admin'], 'user_type':user_type,'user_id':user.id, 'is_verified':user.is_verified
         },status=HTTP_201_CREATED)
     
     
@@ -81,7 +81,7 @@ def login(request):
             user_type='admin'
         else:
             user_type='customer'
-        return Response({'token': token.key,'email':user.email,'is_admin':user.is_admin, 'user_type':user_type, 'user_id':user.id },
+        return Response({'token': token.key,'email':user.email,'is_admin':user.is_admin, 'user_type':user_type, 'user_id':user.id ,'is_verified':user.is_verified},
                         status=HTTP_200_OK)
     # else:
     #     return Response({'token': token.key,'email':user.email,'is_admin':user.is_admin},
@@ -222,3 +222,8 @@ class Owners(GroupRequiredMixin,APIView):
             return Response({'data':result}, status = HTTP_400_BAD_REQUEST) 
 
 
+class Logout(APIView):
+    def get(self, request, format=None):
+        # simply delete the token to force a login
+        request.user.auth_token.delete()
+        return Response(status=status.HTTP_200_OK)

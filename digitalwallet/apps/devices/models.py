@@ -25,7 +25,7 @@ class Device(models.Model):
 
     class Meta:
         db_table = "devices"
-        verbose_name = "Devices"
+        verbose_name = "Device"
         managed  = True
 
     def get_devices(self):
