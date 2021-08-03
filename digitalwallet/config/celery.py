@@ -6,17 +6,17 @@ from celery.schedules import crontab
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings')
 
 app = Celery('config')
+app.config_from_object('django.conf:settings', namespace='CELERY')
 
 
 app.conf.beat_schedule = {
-    # Executes every Monday morning at 7:30 a.m.
-    'add-every-monday-morning': {
+    # Executes every first of every month.
+    'send-email-every-month': {
         'task': 'apps.transactions.tasks.userReport',
-        'schedule': crontab(hour='*', minute='*', day_of_week='*'),
+        'schedule': crontab(0, 0, day_of_month='1'),
         # 'args': (16, 16),
     },
 }
 
 
-app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()

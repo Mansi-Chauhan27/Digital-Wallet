@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.views.generic import View
+import os
 
 from apps.clients.serializers import UserSerialzer
 from apps.clients.models import User
@@ -25,65 +26,58 @@ from celery import group
 # from celery.task.sets import TaskSet, subtask
 # from tasks import add
 
-#Creating our view, it is a class based view
-# class GeneratePdf(View):
 @shared_task
 def userReport():    
     #getting the users
     u = User.objects.filter(is_active=True,is_customer=True,is_verified=True)
     serializer = UserSerialzer(u, many=True)
     user_list = json.loads(json.dumps(serializer.data))
-    print(user_list)
-
-    #getting the template
-    # res = render_to_pdf('transaction.html','test.pdf',{'data':'mansi','keywords':[{'id':1},{'id':2}]})
-    # print(res)
-    # if(res):
+    
     for item in user_list:
         for card in item['cards_detail']:
             print(card['id'])
             transaction_history = getTransactionHistory(card['id'])
             print(transaction_history['data'])
-            res = group(generateReportAndSendMail.s('1234','mansi9@yopmail.com',settings.SENDER_EMAIL,settings.SENDER_PASS,item['email'],transaction_history['data'],str(card['card_number'])[-4:]))()
+            group(generateReportAndSendMail.s('mansi9@yopmail.com',settings.SENDER_EMAIL,settings.SENDER_PASS,item['email'],transaction_history['data'],str(card['card_number'])[-4:]))()
             # generateReportAndSendMail.delay('1234','mansi9@yopmail.com',settings.SENDER_EMAIL,settings.SENDER_PASS,item['email'],transaction_history['data'],str(card['card_number'])[-4:])
-            pass
-        pass
-        # s = subtask("apps.transaction.tasks.add", args=(2, 2))
-        # generateReportAndSendMail('1234','mansi9@yopmail.com',settings.SENDER_EMAIL,settings.SENDER_PASS,item['email'])
-        #rendering the template
-    # return HttpResponse('done')
+            # pass
+    
+        
 
 @shared_task
-def generateReportAndSendMail(self, otp,receiver_email,sender_email,sender_pass,useremail,transaction_history,card):
+def generateReportAndSendMail(receiver_email,sender_email,sender_pass,useremail,transaction_history,card):
     try:
-        filename_pdf = 'transaction.pdf'
+        filename_pdf = useremail+'.pdf'
         res = render_to_pdf('transaction.html',filename_pdf,{'data':useremail,'transaction':transaction_history})
-        print(res)
         if(res):
             template = get_template('intro.html')
             context = {'card': str(card),'useremail':useremail}
             content = template.render(context)
             mail_content = content
-            print(receiver_email,sender_email,sender_pass)
+
             #The mail addresses and password
+            # print(2/0)
             sender_address = sender_email
             sender_password = sender_pass
             receiver_address = receiver_email
+
             #Setup the MIME
             message = MIMEMultipart()
             message['From'] = sender_address
             message['To'] = receiver_address
-            message['Subject'] = 'A test mail sent by Python. It has an attachment.'   #The subject line
+            message['Subject'] = 'Transaction Details.'   #The subject line
+
             #The body and the attachments for the mail
             message.attach(MIMEText(mail_content, 'text/html'))
+
             # Adding Pdf file attachment
             filename='pdf/'+filename_pdf
             fo=open(filename,'rb')
-            attach = email.mime.application.MIMEApplication(fo.read(),_subtype="ppt")
+            attach = email.mime.application.MIMEApplication(fo.read(),_subtype="pdf")
             fo.close()
-            attach.add_header('Content-Disposition','attachment',filename=filename)
-
+            attach.add_header('Content-Disposition','attachment',filename='transaction.pdf')
             message.attach(attach)
+
             #Create SMTP session for sending the mail
             session = smtplib.SMTP('smtp.gmail.com', 587) #use gmail with port
             session.starttls() #enable security
@@ -91,9 +85,13 @@ def generateReportAndSendMail(self, otp,receiver_email,sender_email,sender_pass,
             text = message.as_string()
             session.sendmail(sender_address, receiver_address, text)
             session.quit()
+
+            if os.path.exists(str(filename)):
+                os.remove(str(filename))
     except Exception as exc:
         # retry after 1 minute
-        raise self.retry(exc=exc, countdown=60)            
+        print(exec)
+        raise generateReportAndSendMail.retry(exc=exc, countdown=60)            
 
 @shared_task
 def add(otp,receiver_email,sender_email,sender_pass,useremail,transaction_history,card):
@@ -106,7 +104,9 @@ def getTransactionHistory(card_id):
     user = User()
     result={}
     card_id=card_id
-    transaction_query = transaction.get_transactions(card_id)
+    # print(transaction.get_last_month_transactions(card_id))
+    transaction_query = transaction.get_last_month_transactions(card_id)
+    print(transaction_query)
     transaction_serializer = TransactionSerializer(transaction_query,many=True)
     transaction_queryset = json.loads(json.dumps(transaction_serializer.data))
     device_query = device.get_all_devices()

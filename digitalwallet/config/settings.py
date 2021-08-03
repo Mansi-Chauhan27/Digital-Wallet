@@ -188,11 +188,8 @@ CELERY_TIMEZONE = 'Asia/Kolkata'
 
 CELERY_RESULT_BACKEND = 'django-db'
 
-# CELERY BEAT
-
-CELERY_BEAT_SCHEDULAR = 'django_celery_beat.schedulars:DatabaseScheduler'
-
-
+#CELERY BEAT
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
 # LOGIN_REDIRECT_URL = '/client/login'
 
