@@ -1,9 +1,10 @@
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from datetime import datetime, timedelta
 
 from apps.clients.models import User
-from apps.common.helper.utils import cardgen
+from apps.common.helper.utils import cardgen, get_lapse
 
 
 ########## According to New db Schema ###############
@@ -23,7 +24,7 @@ class Card(models.Model):
 
     class Meta:
         db_table = "cards"
-        verbose_name = "Cards"
+        verbose_name = "Card"
         managed  = True
 
     def get_users_cards(self,userid):
@@ -67,12 +68,16 @@ class Transaction(models.Model):
 
     class Meta:
         db_table = "transactions"
-        verbose_name = "Transactions"
+        verbose_name = "Transaction"
         managed = True
 
 
     def get_transactions(self,card_id):
         return Transaction.objects.filter(Q(to_card = card_id)|Q(from_card = card_id)).all()
+
+    def get_last_month_transactions(self,card_id):
+        last_month_filter = datetime.today() - timedelta(days=get_lapse())
+        return Transaction.objects.filter(Q(to_card = card_id)|Q(from_card = card_id),created_at__gte=last_month_filter)
 
 ########## According to previous db Schema ###############
 

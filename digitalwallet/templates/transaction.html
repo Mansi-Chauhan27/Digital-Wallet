@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<style>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
+</style>
+</head>
+<body>
+
+<h2>Transaction History</h2>
+
+<table>
+  <tr>
+    <th>Date Time</th>
+    <th>Status</th>
+    <th>Source</th>
+    <th>Amount</th>
+  </tr>
+  {% for tr in transaction %}
+  <tr>
+    <td>{{tr.created_at}}</td>
+    <td>{{tr.status}}</td>
+    <td>{{tr.source}}</td>
+    <td>{{tr.amount}}</td>
+  </tr>
+  {% endfor %}
+ 
+</table>
+
+
+
+</body>
+</html>
+ 

@@ -30,7 +30,7 @@ class User(AbstractUser):
 
     class Meta:
         db_table = "users"
-        verbose_name = "Users"
+        verbose_name = "User"
 
     def get_user_email_by_id(self,userid):
         return list(User.objects.filter(id=userid).values('email'))[0]['email']
@@ -65,9 +65,10 @@ class Otp(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_used = models.BooleanField(default=False)
 
+
     class Meta:
         db_table = "otps"
-        verbose_name = "Otps"
+        verbose_name = "Otp"
         managed  = True
 
 
